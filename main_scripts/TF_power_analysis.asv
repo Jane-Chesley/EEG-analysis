@@ -101,7 +101,7 @@ input = dir(fullfile('output', '*data_clean*'));
 % load all
 disp('loading data...')
 for i = 1: length(input)
-    disp(strcat('loading data...', num2str(i),' of ', num2str(length(input))))
+    disp(strcat('loading data...', num2str(i),' of ', num2str(length(input))));
     load(strcat(input(i).folder, '/',input(i).name));
 end
 
