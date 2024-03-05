@@ -1,0 +1,12 @@
+/input/EEG_data/*.eeg
+/input/EEG_data/*.vhdr
+/input/EEG_data/*.vmrk
+.DS_Store
+/output/*.mat
+/derivatives/deriv01_data_preprocessed/*.mat
+/derivatives/deriv02_data_ICA/*.mat
+/derivatives/deriv04_data_clean/*.mat
+
+
+
+
