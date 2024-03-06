@@ -3,7 +3,7 @@
 %  ------------------------------------------------------------------------
 
 % Script Description:
-% This MATLAB script performs analysis of time-freuqency power of preprocessed EEG data.
+% This MATLAB script performs analysis of time-frequency power of preprocessed EEG data.
 
 
 % Usage:
@@ -58,13 +58,9 @@
 clear, clc, close all;
 restoredefaultpath;
 
-
-
 % Part 1.2 set up relevant directories --------------------------------------------------
 [dir_parent, ~, ~] = fileparts(pwd);
 cd(dir_parent);
-
-
 
 % Part 1.3 initialize functions --------------------------------------------------
 
@@ -74,15 +70,6 @@ addpath('functions');
 % specify the path to the Fieldtrip Toolbox on your system
 % dir_FT = '';
 dir_FT = '/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Collections/FieldTrip';
-
-% issue a warning to the user if the path is not specified
-if isempty(dir_FT)
-    warning('dir_FT is empty. Please provide the path to the Fieldtrip Toolbox on your system.');
-    % Prompt the user to assign a value to the variable
-    dir_FT = input('Enter the path to Fieldtrip Toolbox on your system: ','s'); % 's' specifies input as string
-end
-
-
 
 % initialize the toolbox
 addpath(dir_FT); ft_defaults;
@@ -122,8 +109,25 @@ cfg.hpfilter            = 'yes';
 cfg.hpfreq              = 1;
 cfg.detrend             = 'yes'; % removes drifts; use for TF analysis but not ERP
 
+% pre-allocate variables for speed
+N = length(data_clean_hum_body_norm);
+data_TF_hum_body_norm       = cell(1,N); 
+data_TF_hum_face_norm       = cell(1,N); 
+data_TF_hum_obj_norm        = cell(1,N); 
+data_TF_monk_body_norm      = cell(1,N); 
+data_TF_monk_face_norm      = cell(1,N); 
+data_TF_monk_obj_norm       = cell(1,N); 
+data_TF_hum_body_scr        = cell(1,N); 
+data_TF_hum_face_scr        = cell(1,N); 
+data_TF_hum_obj_scr         = cell(1,N); 
+data_TF_monk_body_scr       = cell(1,N); 
+data_TF_monk_face_scr       = cell(1,N); 
+data_TF_monk_obj_scr        = cell(1,N); 
+data_TF_pooled_normal       = cell(1,N); 
+data_TF_pooled_scramble     = cell(1,N); 
+
 % execute preprocessing 
-for s = 1:length(data_clean_hum_body_norm)
+for s = 1:N
 
     % hum_body_norm
     data_TF_hum_body_norm{s}  = ft_preprocessing(cfg, data_clean_hum_body_norm{s});

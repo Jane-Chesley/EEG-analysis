@@ -96,9 +96,9 @@ max_T1 = 1;
 
 % calculate subject-level PLIs for each frequency band, averaged across trials 
 % input is subject-level clean data for ONE condition
-% output for each condition includes freq x channel x channel x subject data; 
-% organized as follows: PLI_hum_body_norm{freq}(channel,channel,subject); 
-% PLI values are represented in cells of each (channel,channel) matrix; (0 = no connectivity; 1 = perfect connectivity)
+% output for each condition includes freq x channel x channel x subject; 
+% organized as such: PLI_hum_body_norm{freq}(channel,channel,subject); 
+% PLI values are represented in cells of each channel*channel matrix
 % frequency bands are segmented as follows: {freq1: delta 1-3 Hz} {freq2: theta 4-7 Hz} {freq3: alpha 8-12 Hz} {freq4: beta 13-30 Hz} 
 PLI_hum_body_norm = PLI_all_subjects(data_clean_hum_body_norm, min_T1, max_T1);
 PLI_hum_face_norm = PLI_all_subjects(data_clean_hum_face_norm, min_T1, max_T1);
@@ -129,11 +129,6 @@ variables = who('*PLI*');  % Get all variables containing 'PLI' in their name
 for i = 1:length(variables)
     save(fullfile('output', [variables{i} '.mat']), variables{i}); % save all to /output
 end
-
-
-
-
-
 
 
 % %%

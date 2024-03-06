@@ -55,8 +55,8 @@
 %       4.1 subject-level analysis
 %       4.2 group-level analysis
 %   5. Stratification
-%       5.1 12-condition stratification
-%       5.2 2-condition stratification
+%       5.1 12-conditions
+%       5.2 2-conditions
 
 % ------------------------------------------------------------------------
 
@@ -88,15 +88,6 @@ addpath('functions');
 % dir_FT = '';
 dir_FT = '/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Collections/FieldTrip';
 
-% issue a warning to the user if the path is not specified
-if isempty(dir_FT)
-    warning('dir_FT is empty. Please provide the path to the Fieldtrip Toolbox on your system.');
-    % Prompt the user to assign a value to the variable
-    dir_FT = input('Enter the path to Fieldtrip Toolbox on your system: ','s'); % 's' specifies input as string
-end
-
-
-
 % initialize the toolbox
 addpath(dir_FT); ft_defaults;
 
@@ -123,7 +114,7 @@ for i = 1:length(input)
     load(strcat('input','/event_codes/',subjectid,'.mat')); % loads var 'event_codes'
 
     % preprocess file i
-    data_preprocessed       = prepare(file_EEG, event_codes);
+    data_preprocessed       = prepare_data(file_EEG, event_codes);
 
     % save derivative data i 'data_preprocessed'
     deriv                   = '/deriv01_data_preprocessed/';
@@ -186,6 +177,10 @@ clearvars -except dir_parent
 % identify all data to analyze
 % data to analyze is subject-level rejected artifacts, constructed above in Part 3.1
 input = dir(fullfile(strcat('derivatives','/deriv03_rejected_artifacts'), '*.mat'));
+
+% pre-allocate variables for speed
+rejected_artifacts_all_subj = cell(1,length(input)); 
+total_artifacts             = zeros(1,29);
 
 for i = 1:length(input)
 
@@ -264,6 +259,11 @@ end
 % data to analyze is subject-level rejected trials, constructed above in Part 4.1
 input = dir(fullfile(strcat('derivatives','/deriv05_bad_trials'), '*.mat'));
 
+% pre-allocate variables for speed
+total_preserved_group           = zeros(1,length(input)); 
+total_trials_group              = zeros(1,length(input)); 
+perc_preserved_group            = zeros(1,length(input)); 
+
 for i = 1:length(input)
 
     % load input file i 'bad_trials'
@@ -310,6 +310,11 @@ clearvars -except dir_parent
 % data to analyze is subject-level cleaned data, constructed above in Part 4
 input = dir(fullfile(strcat('derivatives','/deriv04_data_clean'), '*.mat'));
 
+
+% pre-allocate variables for speed
+data_clean_12_cond              = cell(length(input),12); 
+data_clean_pooled_NS            = cell(length(input),2); 
+
 for i = 1:length(input)
 
     % load input file i
@@ -351,7 +356,7 @@ end
 
 
 
-% create separate variables for each condition
+% create separate variables for each condition (this reduces file size to optimize saving and loading)
 data_clean_hum_body_norm    = data_clean_12_cond(:, 1);
 data_clean_hum_face_norm    = data_clean_12_cond(:, 2); 
 data_clean_hum_obj_norm     = data_clean_12_cond(:, 3); 
