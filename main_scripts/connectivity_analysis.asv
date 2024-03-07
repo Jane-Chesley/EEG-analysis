@@ -14,7 +14,7 @@
 %
 % Inputs:
 %   - Raw data is stored in '/EEG-analysis/input' and includes:
-%       1. The subdirectory '/EEG_data', which contains the unprocessed EEG data for each subject (.eeg, .vhdr and .vmrk files)
+%       1. The subdirectory '/EEG_data', which contains the unprocessed EEG data for 30 subjects (.eeg, .vhdr and .vmrk files)
 %       2. The subdirectory '/event_codes', which contains the condition codes (1-12) for each trial and for each subject
 %
 % Outputs:
@@ -40,7 +40,6 @@
 %   3. Save 
 
 % ------------------------------------------------------------------------
-
 
 
 %% ------------------------------------------------------------------------
