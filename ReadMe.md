@@ -33,7 +33,10 @@ This repository provides a comprehensive pipeline for the analysis of 5-D electr
 
 To get started with this pipeline, follow these steps:
 1. Install MATLAB on your system, along with the following toolboxes:
-    -  x, y, and z. 
+    - Image Processing Toolbox
+    - Statistics and Machine Learning Toolbox
+    - Bioinformatics Toolbox
+    - FieldTrip Toolbox
 2. Download or clone this repository, 'EEG-analysis'
 3. Launch MATLAB and navigate to the repository directory '/main_scripts'
 4. Save raw EEG data in the repository directory '/input' 

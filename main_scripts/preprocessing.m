@@ -16,7 +16,6 @@
 %       2. Statistics and Machine Learning Toolbox
 %       3. Bioinformatics Toolbox
 %       4. FieldTrip Toolbox
-%       5. fdr_bh
 %   - Note: check which toolboxes are required by [1] running script [2] executing: [fList,pList] = matlab.codetools.requiredFilesAndProducts('run_analysis.m'); disp({pList.Name}');
 
 
