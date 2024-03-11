@@ -141,7 +141,7 @@ end
 
 
 
-% CHOOSE REGION OF INTEREST 
+% CHOOSE SUB-REGION OF INTEREST (roi)
 all_channels = data_clean_hum_body_norm{1}.label; % channel labels are constant across all measurements 
 roi = {'C3', 'CP3', 'P3'};
 
@@ -150,24 +150,23 @@ roi_idx = find(ismember(all_channels, roi));
 
 
 
-% CHOOSE FREQUENCY BAND OF INTEREST 
+% CHOOSE FREQUENCY BAND OF INTEREST (freq_string)
 freq_string = 'alpha'; 
 
-
-
-if freq_string == 'delta'
+if strcmp(freq_string, 'delta')
     freq = 1;
 
-elseif freq_string == 'theta'
+elseif strcmp(freq_string, 'theta')
     freq = 2; 
 
-elseif freq_string == 'alpha'
+elseif strcmp(freq_string, 'alpha')
     freq = 3; 
 
-elseif freq_string == 'beta';
+elseif strcmp(freq_string, 'beta')
     freq = 4;
 
 end
+
 
 
 
@@ -191,7 +190,6 @@ PLI_allconditions(:,12) = PLI_extraction(PLI_monk_obj_scr, roi_idx, freq);
 
 % Convert the matrix into a table with variable names
 variable_names = {'hum_body_norm','hum_face_norm','hum_obj_norm','monk_body_norm','monk_face_norm','monk_obj_norm','hum_body_scr','hum_face_scr','hum_obj_scr','monk_body_scr','monk_face_scr','monk_obj_scr'};
-
 T = array2table(PLI_allconditions, 'VariableNames', variable_names);
 
 
@@ -202,6 +200,7 @@ writetable(T, strcat('Stats_PLI_allconditions_roi_',freq_string,'.xlsx'));
 
 %% compute normalization (normal - scramble)
 
+PLI_normalized = zeros(29,6);
 for c = 1:6
     PLI_normalized(:,c) = PLI_allconditions(:,c)-PLI_allconditions(:,c+6);
 end 
