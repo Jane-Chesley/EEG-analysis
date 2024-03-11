@@ -140,12 +140,36 @@ for i = 1: length(input)
 end
 
 
+
+% CHOOSE REGION OF INTEREST 
 all_channels = data_clean_hum_body_norm{1}.label; % channel labels are constant across all measurements 
 roi = {'C3', 'CP3', 'P3'};
 
 roi_idx = find(ismember(all_channels, roi)); 
-% freq = 2; % theta 
-freq = 3; % alpha 
+
+
+
+
+% CHOOSE FREQUENCY BAND OF INTEREST 
+freq_string = 'alpha'; 
+
+
+
+if freq_string == 'delta'
+    freq = 1;
+
+elseif freq_string == 'theta'
+    freq = 2; 
+
+elseif freq_string == 'alpha'
+    freq = 3; 
+
+elseif freq_string == 'beta';
+    freq = 4;
+
+end
+
+
 
 PLI_allconditions(:,1) = PLI_extraction(PLI_hum_body_norm, roi_idx, freq);
 PLI_allconditions(:,2) = PLI_extraction(PLI_hum_face_norm, roi_idx, freq);
@@ -172,7 +196,7 @@ T = array2table(PLI_allconditions, 'VariableNames', variable_names);
 
 
 % Write the table to an Excel file
-writetable(T, 'Stats_PLI_alpha_allconditions.xlsx');
+writetable(T, strcat('Stats_PLI_allconditions_roi_',freq_string,'.xlsx'));
 
 
 
@@ -186,7 +210,15 @@ variable_names2 = {'hum_body','hum_face','hum_obj','monk_body','monk_face','monk
 T2 = array2table(PLI_normalized, 'VariableNames', variable_names2);
 
 % Write the table to an Excel file
-writetable(T2,'Stats_PLI_alpha_normalized.xlsx');
+writetable(T2,strcat('Stats_PLI_normalized_roi_',freq_string,'.xlsx'));
+
+
+
+
+
+
+
+
 
 
 % %%
