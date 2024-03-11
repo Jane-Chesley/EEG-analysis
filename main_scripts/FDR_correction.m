@@ -2,7 +2,7 @@
 clear;clc; close all;
 
 % input original p-values 
-orig_p = [0.016; 0.072;0.060];
+orig_p = [0.016; 0.072;0.060; 0.110; 0.371; 0.006];
 
 % output FDR corrected p-values 'adj_p'
 % 'pdep' (default) = independent tests; 'dep' = dependent tests 

@@ -144,8 +144,8 @@ all_channels = data_clean_hum_body_norm{1}.label; % channel labels are constant 
 roi = {'C3', 'CP3', 'P3'};
 
 roi_idx = find(ismember(all_channels, roi)); 
-freq = 2; % theta 
-
+% freq = 2; % theta 
+freq = 3; % alpha 
 
 PLI_allconditions(:,1) = PLI_extraction(PLI_hum_body_norm, roi_idx, freq);
 PLI_allconditions(:,2) = PLI_extraction(PLI_hum_face_norm, roi_idx, freq);
@@ -172,7 +172,9 @@ T = array2table(PLI_allconditions, 'VariableNames', variable_names);
 
 
 % Write the table to an Excel file
-writetable(T, 'Stats_PLI_allconditions_check.xlsx');
+writetable(T, 'Stats_PLI_alpha_allconditions.xlsx');
+
+
 
 %% compute normalization (normal - scramble)
 
@@ -184,7 +186,7 @@ variable_names2 = {'hum_body','hum_face','hum_obj','monk_body','monk_face','monk
 T2 = array2table(PLI_normalized, 'VariableNames', variable_names2);
 
 % Write the table to an Excel file
-writetable(T2,'Stats_PLI_normalized.xlsx');
+writetable(T2,'Stats_PLI_alpha_normalized.xlsx');
 
 
 % %%
