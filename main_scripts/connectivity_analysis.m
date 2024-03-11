@@ -144,7 +144,6 @@ end
 % CHOOSE SUB-REGION OF INTEREST (roi)
 all_channels = data_clean_hum_body_norm{1}.label; % channel labels are constant across all measurements 
 roi = {'C3', 'CP3', 'P3'};
-
 roi_idx = find(ismember(all_channels, roi)); 
 
 
@@ -198,7 +197,7 @@ writetable(T, strcat('Stats_PLI_allconditions_roi_',freq_string,'.xlsx'));
 
 
 
-%% compute normalization (normal - scramble)
+% compute normalization (normal - scramble)
 
 PLI_normalized = zeros(29,6);
 for c = 1:6
@@ -213,10 +212,91 @@ writetable(T2,strcat('Stats_PLI_normalized_roi_',freq_string,'.xlsx'));
 
 
 
+%% ------------------------------------------------------------------------
+%  Part 6 - between-region connectivity 
+%  ------------------------------------------------------------------------
+
+% identify all input data to analyze
+% data to analyze are preprocessed EEG data, stratified by condition
+input = dir(fullfile('output','*PLI*'));
+
+% load all 
+for i = 1: length(input)
+    load(strcat(input(i).folder, '/',input(i).name));
+end
+
+
+
+% CHOOSE 2 REGIONS OF INTEREST 
+all_channels = data_clean_hum_body_norm{1}.label; % channel labels are constant across all measurements 
+roi1 = {'C3', 'CP3', 'P3'};
+roi1_idx = find(ismember(all_channels, roi1)); 
+
+roi2 = {'AFz','Fz','FCz','Cz','CPz','Pz','Oz','Fp1','Fp2','F3','F4','F7','F8','FC3','FC4','FT7','FT8','C4','T7','T8','CP4','TP7','TP8','TP9','TP10','P4','P7','P8','O1','O2'};
+roi2_idx = find(ismember(all_channels, roi2)); 
+
+
+
+% CHOOSE FREQUENCY BAND OF INTEREST (freq_string)
+freq_string = 'alpha'; 
+
+if strcmp(freq_string, 'delta')
+    freq = 1;
+
+elseif strcmp(freq_string, 'theta')
+    freq = 2; 
+
+elseif strcmp(freq_string, 'alpha')
+    freq = 3; 
+
+elseif strcmp(freq_string, 'beta')
+    freq = 4;
+
+end
 
 
 
 
+PLI_allconditions(:,1) = PLI_between_regions(PLI_hum_body_norm, roi1_idx, roi2_idx,freq);
+PLI_allconditions(:,2) = PLI_between_regions(PLI_hum_face_norm, roi1_idx, roi2_idx,freq);
+PLI_allconditions(:,3) = PLI_between_regions(PLI_hum_obj_norm, roi1_idx, roi2_idx,freq);
+
+PLI_allconditions(:,4) = PLI_between_regions(PLI_monk_body_norm, roi1_idx, roi2_idx,freq);
+PLI_allconditions(:,5) = PLI_between_regions(PLI_monk_face_norm, roi1_idx, roi2_idx,freq);
+PLI_allconditions(:,6) = PLI_between_regions(PLI_monk_obj_norm, roi1_idx, roi2_idx,freq);
+
+PLI_allconditions(:,7) = PLI_between_regions(PLI_hum_body_scr, roi1_idx, roi2_idx,freq);
+PLI_allconditions(:,8) = PLI_between_regions(PLI_hum_face_scr, roi1_idx, roi2_idx,freq);
+PLI_allconditions(:,9) = PLI_between_regions(PLI_hum_obj_scr, roi1_idx, roi2_idx,freq);
+
+PLI_allconditions(:,10) = PLI_between_regions(PLI_monk_body_scr, roi1_idx, roi2_idx,freq);
+PLI_allconditions(:,11) = PLI_between_regions(PLI_monk_face_scr, roi1_idx, roi2_idx,freq);
+PLI_allconditions(:,12) = PLI_between_regions(PLI_monk_obj_scr, roi1_idx, roi2_idx,freq);
+
+
+
+% Convert the matrix into a table with variable names
+variable_names = {'hum_body_norm','hum_face_norm','hum_obj_norm','monk_body_norm','monk_face_norm','monk_obj_norm','hum_body_scr','hum_face_scr','hum_obj_scr','monk_body_scr','monk_face_scr','monk_obj_scr'};
+T = array2table(PLI_allconditions, 'VariableNames', variable_names);
+
+
+% Write the table to an Excel file
+writetable(T, strcat('Stats_between_PLI_allconditions_roi_',freq_string,'.xlsx'));
+
+
+
+% compute normalization (normal - scramble)
+
+PLI_normalized = zeros(29,6);
+for c = 1:6
+    PLI_normalized(:,c) = PLI_allconditions(:,c)-PLI_allconditions(:,c+6);
+end 
+variable_names2 = {'hum_body','hum_face','hum_obj','monk_body','monk_face','monk_obj'};
+
+T2 = array2table(PLI_normalized, 'VariableNames', variable_names2);
+
+% Write the table to an Excel file
+writetable(T2,strcat('Stats_between_PLI_normalized_roi_',freq_string,'.xlsx'));
 
 
 
