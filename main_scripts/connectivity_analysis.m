@@ -141,15 +141,22 @@ end
 
 
 
-% CHOOSE SUB-REGION OF INTEREST (roi)
+%% CHOOSE SUB-REGION OF INTEREST (roi and roi_string)
 all_channels = data_clean_hum_body_norm{1}.label; % channel labels are constant across all measurements 
-roi = {'C3', 'CP3', 'P3'};
+
+%% 'human body selective cluster'
+% roi = {'C3', 'CP3', 'P3'};
+% roi_string = 'roiHumanBody'
+
+%% 'object-level processing cluster' 
+roi = {'AFz', 'FCz', 'Cz', 'CPz', 'Pz', 'Fp1', 'Fp2', 'F3', 'F4', 'F7', 'F8', 'FC3', 'FC4', 'FT7', 'FT8', 'C3', 'C4', 'CP3', 'CP4', 'TP10', 'P3', 'P4', 'P8'} ;
 roi_idx = find(ismember(all_channels, roi)); 
+roi_string = 'roiObjectLvl';
 
 
 
 
-% CHOOSE FREQUENCY BAND OF INTEREST (freq_string)
+%% CHOOSE FREQUENCY BAND OF INTEREST (freq_string)
 freq_string = 'alpha'; 
 
 if strcmp(freq_string, 'delta')
@@ -167,6 +174,7 @@ elseif strcmp(freq_string, 'beta')
 end
 
 
+%% extract relevant information 
 
 
 PLI_allconditions(:,1) = PLI_extraction(PLI_hum_body_norm, roi_idx, freq);
@@ -193,7 +201,7 @@ T = array2table(PLI_allconditions, 'VariableNames', variable_names);
 
 
 % Write the table to an Excel file
-writetable(T, strcat('Stats_PLI_allconditions_roi_',freq_string,'.xlsx'));
+writetable(T, strcat('Stats_PLI_allconditions_',roi_string,'_',freq_string,'.xlsx'));
 
 
 
@@ -208,7 +216,7 @@ variable_names2 = {'hum_body','hum_face','hum_obj','monk_body','monk_face','monk
 T2 = array2table(PLI_normalized, 'VariableNames', variable_names2);
 
 % Write the table to an Excel file
-writetable(T2,strcat('Stats_PLI_normalized_roi_',freq_string,'.xlsx'));
+writetable(T2,strcat('Stats_PLI_normalized_',roi_string,'_',freq_string,'.xlsx'));
 
 
 
