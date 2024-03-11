@@ -132,7 +132,7 @@ end
 
 % identify all input data to analyze
 % data to analyze are preprocessed EEG data, stratified by condition
-input = dir(fullfile('output', '*PLI*'));
+input = dir(fullfile('output','*PLI*'));
 
 % load all 
 for i = 1: length(input)
@@ -172,7 +172,7 @@ T = array2table(PLI_allconditions, 'VariableNames', variable_names);
 
 
 % Write the table to an Excel file
-writetable(T, 'Stats_PLI_allconditions.xlsx');
+writetable(T, 'Stats_PLI_allconditions_check.xlsx');
 
 %% compute normalization (normal - scramble)
 

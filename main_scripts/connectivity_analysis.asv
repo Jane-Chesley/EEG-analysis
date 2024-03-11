@@ -171,11 +171,20 @@ variable_names = {'hum_body_norm','hum_face_norm','hum_obj_norm','monk_body_norm
 T = array2table(PLI_allconditions, 'VariableNames', variable_names);
 
 
-%%
 % Write the table to an Excel file
-writetable(T, fullfile('/output/', 'Stats_PLI_allconditions.xlsx'));
+writetable(T, 'Stats_PLI_allconditions_.xlsx');
 
+%% compute normalization (normal - scramble)
 
+for c = 1:6
+    PLI_normalized(:,c) = PLI_allconditions(:,c)-PLI_allconditions(:,c+6);
+end 
+variable_names2 = {'hum_body','hum_face','hum_obj','monk_body','monk_face','monk_obj'};
+
+T2 = array2table(PLI_normalized, 'VariableNames', variable_names2);
+
+% Write the table to an Excel file
+writetable(T2,'Stats_PLI_normalized.xlsx');
 
 
 % %%
