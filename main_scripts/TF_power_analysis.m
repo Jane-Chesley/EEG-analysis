@@ -319,50 +319,8 @@ end
 
 
 %% ------------------------------------------------------------------------
-%  Part 7 - frequency grand average
-%  ------------------------------------------------------------------------
-
-% average power spectra data within subjects
-
-% clear cfg
-cfg = [];
-
-% 12-condition FGA
-FGA_hum_body_norm   = ft_freqgrandaverage(cfg,data_TF_hum_body_norm{1,:}); 
-FGA_hum_face_norm   = ft_freqgrandaverage(cfg,data_TF_hum_face_norm{1,:}); 
-FGA_hum_obj_norm   = ft_freqgrandaverage(cfg,data_TF_hum_obj_norm{1,:}); 
-
-FGA_monk_body_norm   = ft_freqgrandaverage(cfg,data_TF_monk_body_norm{1,:}); 
-FGA_monk_face_norm   = ft_freqgrandaverage(cfg,data_TF_monk_face_norm{1,:}); 
-FGA_monk_obj_norm   = ft_freqgrandaverage(cfg,data_TF_monk_obj_norm{1,:}); 
-
-FGA_hum_body_scr   = ft_freqgrandaverage(cfg,data_TF_hum_body_scr{1,:}); 
-FGA_hum_face_scr   = ft_freqgrandaverage(cfg,data_TF_hum_face_scr{1,:}); 
-FGA_hum_obj_scr   = ft_freqgrandaverage(cfg,data_TF_hum_obj_scr{1,:}); 
-
-FGA_monk_body_scr   = ft_freqgrandaverage(cfg,data_TF_monk_body_scr{1,:}); 
-FGA_monk_face_scr   = ft_freqgrandaverage(cfg,data_TF_monk_face_scr{1,:}); 
-FGA_monk_obj_scr   = ft_freqgrandaverage(cfg,data_TF_monk_obj_scr{1,:}); 
-
-% 2-condition (Normal v. Scramble; pooled) FGA
-FGA_pooled_normal   = ft_freqgrandaverage(cfg,data_TF_pooled_normal{1,:}); 
-FGA_pooled_scramble   = ft_freqgrandaverage(cfg,data_TF_pooled_scramble{1,:}); 
-
-
-
-%% ------------------------------------------------------------------------
-%  Part 8 - save group-level TF data 
-%  ------------------------------------------------------------------------
-
-variables = who('*FGA*');  % Get variables containing 'FGA' in their name
-for i = 1:length(variables)
-    save(fullfile('output', [variables{i} '.mat']), variables{i});
-end
-
-
-
-%% ------------------------------------------------------------------------
-%  Part 9 - Extract TF power from ROI (channels), FOI (frequency band), TOI (time-window)
+%  Part 9 - Extract TF power from ROI (channels), FOI (frequency band), TOI
+%  (time-window) for statistical analysis 
 %  ------------------------------------------------------------------------
 
 % identify all input data to analyze
@@ -441,6 +399,223 @@ T2 = array2table(TFpower_normalized, 'VariableNames', variable_names2);
 writetable(T2, strcat('Stats_TFpower_normalized_',roi_string,'_',foi_string,'_',toi_string,'.xlsx'));
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%% ------------------------------------------------------------------------
+%  Figures
+%  ------------------------------------------------------------------------
+
+% FGA (across subjects) for parameters of interest 
+
+cfg = [];
+cfg.keepindividual = 'no';
+cfg.foilim         = [4 7]; % theta 
+cfg.toilim         = [-0.1 1]; 
+cfg.channel        = roi;
+
+% 12-condition FGA
+FGA_hum_body_norm   = ft_freqgrandaverage(cfg,data_TF_hum_body_norm{1,:}); 
+FGA_hum_face_norm   = ft_freqgrandaverage(cfg,data_TF_hum_face_norm{1,:}); 
+FGA_hum_obj_norm   = ft_freqgrandaverage(cfg,data_TF_hum_obj_norm{1,:}); 
+
+FGA_monk_body_norm   = ft_freqgrandaverage(cfg,data_TF_monk_body_norm{1,:}); 
+FGA_monk_face_norm   = ft_freqgrandaverage(cfg,data_TF_monk_face_norm{1,:}); 
+FGA_monk_obj_norm   = ft_freqgrandaverage(cfg,data_TF_monk_obj_norm{1,:}); 
+
+FGA_hum_body_scr   = ft_freqgrandaverage(cfg,data_TF_hum_body_scr{1,:}); 
+FGA_hum_face_scr   = ft_freqgrandaverage(cfg,data_TF_hum_face_scr{1,:}); 
+FGA_hum_obj_scr   = ft_freqgrandaverage(cfg,data_TF_hum_obj_scr{1,:}); 
+
+FGA_monk_body_scr   = ft_freqgrandaverage(cfg,data_TF_monk_body_scr{1,:}); 
+FGA_monk_face_scr   = ft_freqgrandaverage(cfg,data_TF_monk_face_scr{1,:}); 
+FGA_monk_obj_scr   = ft_freqgrandaverage(cfg,data_TF_monk_obj_scr{1,:}); 
+
+% 2-condition (Normal v. Scramble; pooled) FGA
+FGA_pooled_normal   = ft_freqgrandaverage(cfg,data_TF_pooled_normal{1,:}); 
+FGA_pooled_scramble   = ft_freqgrandaverage(cfg,data_TF_pooled_scramble{1,:}); 
+
+
+
+% relevant output of ft_freqgrandaverage is powspctrm (chan x freq x time)
+% average across chan and freq (dim 1:2) for each condition 
+GA_timepts_hum_body_norm = squeeze(mean(FGA_hum_body_norm.powspctrm,1:2));
+GA_timepts_hum_face_norm = squeeze(mean(FGA_hum_face_norm.powspctrm,1:2));
+GA_timepts_hum_obj_norm = squeeze(mean(FGA_hum_obj_norm.powspctrm,1:2));
+
+GA_timepts_monk_body_norm = squeeze(mean(FGA_monk_body_norm.powspctrm,1:2));
+GA_timepts_monk_face_norm = squeeze(mean(FGA_monk_face_norm.powspctrm,1:2));
+GA_timepts_monk_obj_norm = squeeze(mean(FGA_monk_obj_norm.powspctrm,1:2));
+
+GA_timepts_hum_body_scr = squeeze(mean(FGA_hum_body_scr.powspctrm,1:2));
+GA_timepts_hum_face_scr = squeeze(mean(FGA_hum_face_scr.powspctrm,1:2));
+GA_timepts_hum_obj_scr = squeeze(mean(FGA_hum_obj_scr.powspctrm,1:2));
+
+GA_timepts_monk_body_scr = squeeze(mean(FGA_monk_body_scr.powspctrm,1:2));
+GA_timepts_monk_face_scr = squeeze(mean(FGA_monk_face_scr.powspctrm,1:2));
+GA_timepts_monk_obj_scr = squeeze(mean(FGA_monk_obj_scr.powspctrm,1:2));
+
+GA_timepts_pooled_normal = squeeze(mean(FGA_pooled_normal.powspctrm,1:2));
+GA_timepts_pooled_scramble = squeeze(mean(FGA_pooled_scramble.powspctrm,1:2));
+
+
+% normalization (subtraction Normal - Scramble)
+GA_timepts_diff_hum_body = GA_timepts_hum_body_norm-GA_timepts_hum_body_scr;
+GA_timepts_diff_hum_face = GA_timepts_hum_face_norm-GA_timepts_hum_face_scr;
+GA_timepts_diff_hum_obj = GA_timepts_hum_obj_norm-GA_timepts_hum_obj_scr;
+
+GA_timepts_diff_monk_body = GA_timepts_monk_body_norm-GA_timepts_monk_body_scr;
+GA_timepts_diff_monk_face = GA_timepts_monk_face_norm-GA_timepts_monk_face_scr;
+GA_timepts_diff_monk_obj = GA_timepts_monk_obj_norm-GA_timepts_monk_obj_scr;
+
+
+% define vector of time points in ms to use for plots
+timepts = FGA_hum_body_norm.time; % get timepts, which are constant across all datasets
+timepts = round(timepts,2); % round to 2 decimals
+timepts = timepts*1000; % ms to seconds
+
+
+%% figure 1 
+
+% plot difference bodies 
+close all 
+fig = figure; 
+plot(timepts,GA_timepts_diff_hum_body,"Color",'k','LineWidth',5) %%%%%%%%%%%%%%%%%%% plot line 1 HUMANS 
+
+hold on
+set(gca,'xtick',-200:200:1000,'FontSize',18,'FontName','Calibri','FontWeight','bold');
+ylim([-0.7 1.3]);
+xlim([-150 1100]); 
+xticklabels({-200:200:1000}); 
+set(gca,'XAxisLocation', 'origin');
+set(gca,'YAxisLocation', 'origin');
+% xlabel('Time (s)','FontSize',10)
+% ylabel('Theta power (dB)','FontSize',10)
+set(gca,'linewidth',1.5)
+set(gca,'box','off');
+title('Differential bodies'); 
+
+hold on 
+plot(timepts,GA_timepts_diff_monk_body,"Color",'k','LineWidth',4,'LineStyle',':') %%%%%%%%%%%%%%%%%%% plot line 2 MONKEYS 
+leg = legend({'Human', 'Monkey'});
+
+% % save 
+% saveas(fig,'TimeSeries_difference_Bodies.png')
+
+
+
+
+%% figure 2 
+
+% plot difference faces 
+difference = 3;
+close all 
+fig = figure; 
+plot(timepts,GA_timepts_diff_hum_face,"Color",'k','LineWidth',5) %%%%%%%%%%%%%%%%%%% plot line 1 HUMANS 
+
+hold on
+set(gca,'xtick',-200:200:1000,'FontSize',18,'FontName','Calibri','FontWeight','bold');
+set(gca,'ytick',-1:0.5:1.5)
+ylim([-0.7 1.3]);
+xlim([-150 1100]); 
+xticklabels({-200:200:1000}); 
+set(gca,'XAxisLocation', 'origin');
+set(gca,'YAxisLocation', 'origin');
+% xlabel('Time (s)','FontSize',10)
+% ylabel('Theta power (dB)','FontSize',10)
+set(gca,'linewidth',1.5)
+set(gca,'box','off');
+title('Differential faces'); 
+
+hold on 
+plot(timepts,GA_timepts_diff_monk_face,"Color",'k','LineWidth',4,'LineStyle',':') %%%%%%%%%%%%%%%%%%% plot line 2 MONKEYS 
+leg = legend({'Human', 'Monkey'});
+
+% % save 
+% saveas(fig,'TimeSeries_difference_Faces.png')
+
+
+
+
+%% figure 3
+
+% plot difference obj 
+difference = 3;
+close all 
+fig = figure; 
+plot(timepts,GA_timepts_diff_hum_obj,"Color",'k','LineWidth',5) %%%%%%%%%%%%%%%%%%% plot line 1 HUMANS 
+
+hold on
+set(gca,'xtick',-200:200:1000,'FontSize',18,'FontName','Calibri','FontWeight','bold');
+set(gca,'ytick',-1:0.5:1.5)
+ylim([-0.7 1.3]);
+xlim([-150 1100]); 
+xticklabels({-200:200:1000}); 
+set(gca,'XAxisLocation', 'origin');
+set(gca,'YAxisLocation', 'origin');
+% xlabel('Time (s)','FontSize',10)
+% ylabel('Theta power (dB)','FontSize',10)
+set(gca,'linewidth',1.5)
+set(gca,'box','off');
+title('Differential obj'); 
+
+hold on 
+plot(timepts,GA_timepts_diff_monk_obj,"Color",'k','LineWidth',4,'LineStyle',':') %%%%%%%%%%%%%%%%%%% plot line 2 MONKEYS 
+leg = legend({'Human', 'Monkey'});
+
+% % save 
+% saveas(fig,'TimeSeries_difference_Objects.png')
+
+
+
+%% figure 4 
+
+GA_diff_species_bodies = GA_timepts_diff_hum_body-GA_timepts_diff_monk_body; 
+
+% plot 
+close all 
+fig = figure; 
+plot(timepts,GA_timepts_diff_hum_body,"Color",'#7D7D7D','LineWidth',5) %%%%%%%%%%%%%%%%%%% plot line 1 HUMAN 
+
+hold on
+set(gca,'xtick',-200:200:1000,'FontSize',18,'FontName','Calibri','FontWeight','bold');
+ylim([-0.7 1.3]);
+xlim([-150 1100]); 
+xticklabels({-200:200:1000}); 
+set(gca,'XAxisLocation', 'origin');
+set(gca,'YAxisLocation', 'origin');
+% xlabel('Time (s)','FontSize',10)
+% ylabel('Theta power (dB)','FontSize',10)
+set(gca,'linewidth',1.5)
+set(gca,'box','off');
+title('Differential bodies'); 
+
+hold on 
+plot(timepts,GA_timepts_diff_monk_body,"Color",'#7D7D7D','LineWidth',4,'LineStyle',':') %%%%%%%%%%%%%%%%%%% plot line 2 MONKEY 
+
+
+hold on 
+plot(timepts,GA_diff_species_bodies,"Color",'#d72013','LineWidth',5) %%%%%%%%%%%%%%%%%%% plot line 3 HUMAN-MONKEY 
+leg = legend({'Human', 'Monkey','Human-Monkey'}, 'FontSize',18);
+
+% % save 
+saveas(fig,'TimeSeries_difference_species_bodies.png')
+% saveas(fig,'TimeSeries_difference_species_bodies.fig')
 
 
 
