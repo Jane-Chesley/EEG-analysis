@@ -381,16 +381,14 @@ end
 roi = {'C3', 'CP3', 'P3'}; %% 'human body selective cluster'
 all_channels = data_TF_hum_body_norm{1}.label; % channel labels are constant across all measurements 
 roi_idx = find(ismember(all_channels, roi)); 
-roi_string = 'roiHumanBody';
+roi_string = 'roiHumanBody'
 
 % FOI
 foi_idx = 4:7; % theta 
-foi_string = 'theta'; 
 
 % TOI (in SECONDS)
 min_T = 0.2;
 max_T = 0.55;
-toi_string = '200-550ms'; 
 
 all_timepts = data_TF_hum_body_norm{1}.time; % all time points, which are constant across subjects 
 all_timepts = round(all_timepts,2); % round time points 
@@ -423,22 +421,10 @@ T = array2table(data_allsubjects, 'VariableNames', variable_names);
 
 
 % Write the table to an Excel file
-writetable(T, strcat('Stats_TFpower_allconditions_',roi_string,'_',foi_string,'_',toi_string,'.xlsx'));
+writetable(T, strcat('Stats_TFpower_allconditions_',roi_string,'_',freq_string,'.xlsx'));
 
 
 
-% compute normalization (normal - scramble)
-
-TFpower_normalized = zeros(29,6);
-for c = 1:6
-    TFpower_normalized(:,c) = data_allsubjects(:,c)-data_allsubjects(:,c+6);
-end 
-variable_names2 = {'hum_body','hum_face','hum_obj','monk_body','monk_face','monk_obj'};
-
-T2 = array2table(TFpower_normalized, 'VariableNames', variable_names2);
-
-% Write the table to an Excel file
-writetable(T2, strcat('Stats_TFpower_normalized_',roi_string,'_',foi_string,'_',toi_string,'.xlsx'));
 
 
 
