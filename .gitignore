@@ -3,10 +3,14 @@
 /input/EEG_data/*.vmrk
 .DS_Store
 /output/*.mat
+/output/archive1/*.mat
+/output/archive2/*.mat
 /derivatives/deriv01_data_preprocessed/*.mat
 /derivatives/deriv02_data_ICA/*.mat
 /derivatives/deriv04_data_clean/*.mat
-
+/derivatives/deriv04_data_clean/archive/*.mat
+/derivatives/deriv05_bad_trials/*.mat
+/derivatives/deriv05_bad_trials/archive/*.mat
 
 
 
