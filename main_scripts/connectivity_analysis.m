@@ -18,8 +18,8 @@
 %       2. The subdirectory '/event_codes', which contains the condition codes (1-12) for each trial and for each subject
 %
 % Outputs:
-%   - Derivative data are saved to '/EEG-analysis/derivatives'
-%   - Output is saved to '/EEG-analysis/output'
+%   - PLI matrices are saved to '/EEG-analysis/output'
+%   - Mean PLIs of interest are saved to '/EEG-analysis/statistics' for statistical analysis 
 %
 % Author:
 %   Jane Chesley
@@ -29,34 +29,30 @@
 %   Maastricht, the Netherlands
 %
 % Date:
-%   8 November, 2023
-%
-% Version:
-%   1.0
+%   22 February, 2024 
 %
 % Outline of script content:
 %   1. Script setup
-%   2. Analysis
-%   3. Save 
-
+%   2. PLI computation
+%   3. Extract PLIs of interest (within-region and between-region) 
+%   
 % ------------------------------------------------------------------------
 
 
+
+tic; 
 
 %% ------------------------------------------------------------------------
 %  Part 1 - Script setup
 %  ------------------------------------------------------------------------
 
-% Part 1.1 clean working environment --------------------------------------------------
-
+% clean working environment 
 clear, clc, close all;
 restoredefaultpath;
 
-% Part 1.2 set up relevant directories --------------------------------------------------
+% set up relevant directories 
 [dir_parent, ~, ~] = fileparts(pwd);
 cd(dir_parent);
-
-% Part 1.3 initialize functions --------------------------------------------------
 
 % add custom functions to path
 addpath('functions');
@@ -65,13 +61,13 @@ addpath('functions');
 % dir_FT = '';
 dir_FT = '/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Collections/FieldTrip';
 
-% initialize the toolbox
+% initialize Fieldtrip toolbox
 addpath(dir_FT); ft_defaults;
 
 
 
 %% ------------------------------------------------------------------------
-%  Part 2 - Analysis
+%  Part 2 - PLI computation for all subjects, frequencies, and channels
 %  ------------------------------------------------------------------------
 
 % identify all input data to analyze
@@ -89,12 +85,13 @@ end
 min_T1 = 0;
 max_T1 = 1;
 
-% calculate subject-level PLIs for each frequency band, averaged across trials 
+% calculate subject-level PLIs for each frequency band, averaged across trials
 % input is subject-level clean data for ONE condition
-% output for each condition includes freq x channel x channel x subject data; 
-% organized as follows: PLI_hum_body_norm{freq}(channel,channel,subject); 
+% output for each condition includes freq x channel x channel x subject data;
+% organized as follows: PLI_hum_body_norm{freq}(channel,channel,subject);
 % PLI values are represented in cells of each (channel,channel) matrix; (0 = no connectivity; 1 = perfect connectivity)
-% frequency bands are segmented as follows: {freq1: delta 1-3 Hz} {freq2: theta 4-7 Hz} {freq3: alpha 8-12 Hz} {freq4: beta 13-30 Hz} 
+% frequency bands are segmented as follows: {freq1: delta 0.5-3.9 Hz} {freq2: theta 4-7 Hz} {freq3: alpha 8-12 Hz}
+% {freq4: beta 13-30 Hz} {freq5: gamma_A 35-45 Hz} {freq6: gamma_B 25-45 Hz + bandstop 29:31 Hz}
 PLI_hum_body_norm = PLI_all_subjects(data_clean_hum_body_norm, min_T1, max_T1);
 PLI_hum_face_norm = PLI_all_subjects(data_clean_hum_face_norm, min_T1, max_T1);
 PLI_hum_obj_norm = PLI_all_subjects(data_clean_hum_obj_norm, min_T1, max_T1);
@@ -116,221 +113,321 @@ PLI_pooled_scramble = PLI_all_subjects(data_clean_pooled_scramble, min_T1, max_T
 
 
 
-%% ------------------------------------------------------------------------
-%  Part 3 - Save  
-%  ------------------------------------------------------------------------
-
+%  Save
 variables = who('*PLI*');  % Get all variables containing 'PLI' in their name
 for i = 1:length(variables)
     save(fullfile('output', [variables{i} '.mat']), variables{i}); % save all to /output
 end
 
 
+
 %% ------------------------------------------------------------------------
-%  Part 4 - Extract average PLI within subregion and frequency band of interest  
+%  Part 3 - Extract relevant PLIs 
 %  ------------------------------------------------------------------------
 
 % identify all input data to analyze
-% data to analyze are preprocessed EEG data, stratified by condition
+% data to analyze are PLIs for each subject*condition*frequency (computed above in Step 2)
 input = dir(fullfile('output','*PLI*'));
 
-% load all 
+% load all
 for i = 1: length(input)
     load(strcat(input(i).folder, '/',input(i).name));
 end
 
+% define all frequency bands
+all_freq = {'delta';'theta';'alpha';'beta';'gamma_A';'gamma_B'};
 
-
-%% CHOOSE SUB-REGION OF INTEREST (roi and roi_string)
-all_channels = data_clean_hum_body_norm{1}.label; % channel labels are constant across all measurements 
-
-%% 'human body selective cluster'
-% roi = {'C3', 'CP3', 'P3'};
-% roi_string = 'roiHumanBody'
-
-%% 'object-level processing cluster' 
-roi = {'AFz', 'FCz', 'Cz', 'CPz', 'Pz', 'Fp1', 'Fp2', 'F3', 'F4', 'F7', 'F8', 'FC3', 'FC4', 'FT7', 'FT8', 'C3', 'C4', 'CP3', 'CP4', 'TP10', 'P3', 'P4', 'P8'} ;
-roi_idx = find(ismember(all_channels, roi)); 
-roi_string = 'roiObjectLvl';
-
-
-
-
-%% CHOOSE FREQUENCY BAND OF INTEREST (freq_string)
-freq_string = 'alpha'; 
-
-if strcmp(freq_string, 'delta')
-    freq = 1;
-
-elseif strcmp(freq_string, 'theta')
-    freq = 2; 
-
-elseif strcmp(freq_string, 'alpha')
-    freq = 3; 
-
-elseif strcmp(freq_string, 'beta')
-    freq = 4;
-
-end
-
-
-%% extract relevant information 
-
-
-PLI_allconditions(:,1) = PLI_extraction(PLI_hum_body_norm, roi_idx, freq);
-PLI_allconditions(:,2) = PLI_extraction(PLI_hum_face_norm, roi_idx, freq);
-PLI_allconditions(:,3) = PLI_extraction(PLI_hum_obj_norm, roi_idx, freq);
-
-PLI_allconditions(:,4) = PLI_extraction(PLI_monk_body_norm, roi_idx, freq);
-PLI_allconditions(:,5) = PLI_extraction(PLI_monk_face_norm, roi_idx, freq);
-PLI_allconditions(:,6) = PLI_extraction(PLI_monk_obj_norm, roi_idx, freq);
-
-PLI_allconditions(:,7) = PLI_extraction(PLI_hum_body_scr, roi_idx, freq);
-PLI_allconditions(:,8) = PLI_extraction(PLI_hum_face_scr, roi_idx, freq);
-PLI_allconditions(:,9) = PLI_extraction(PLI_hum_obj_scr, roi_idx, freq);
-
-PLI_allconditions(:,10) = PLI_extraction(PLI_monk_body_scr, roi_idx, freq);
-PLI_allconditions(:,11) = PLI_extraction(PLI_monk_face_scr, roi_idx, freq);
-PLI_allconditions(:,12) = PLI_extraction(PLI_monk_obj_scr, roi_idx, freq);
-
-
-
-% Convert the matrix into a table with variable names
-variable_names = {'hum_body_norm','hum_face_norm','hum_obj_norm','monk_body_norm','monk_face_norm','monk_obj_norm','hum_body_scr','hum_face_scr','hum_obj_scr','monk_body_scr','monk_face_scr','monk_obj_scr'};
-T = array2table(PLI_allconditions, 'VariableNames', variable_names);
-
-
-% Write the table to an Excel file
-writetable(T, strcat('Stats_PLI_allconditions_',roi_string,'_',freq_string,'.xlsx'));
-
-
-
-% compute normalization (normal - scramble)
-
-PLI_normalized = zeros(29,6);
-for c = 1:6
-    PLI_normalized(:,c) = PLI_allconditions(:,c)-PLI_allconditions(:,c+6);
-end 
-variable_names2 = {'hum_body','hum_face','hum_obj','monk_body','monk_face','monk_obj'};
-
-T2 = array2table(PLI_normalized, 'VariableNames', variable_names2);
-
-% Write the table to an Excel file
-writetable(T2,strcat('Stats_PLI_normalized_',roi_string,'_',freq_string,'.xlsx'));
+% get all channel labels for roi extraction 
+% channel labels are constant across all measurements
+all_channels = data_clean_hum_body_norm{1}.label; 
 
 
 
 %% ------------------------------------------------------------------------
-%  Part 6 - between-region connectivity 
+%  Within-region PLI
 %  ------------------------------------------------------------------------
 
-% identify all input data to analyze
-% data to analyze are preprocessed EEG data, stratified by condition
-input = dir(fullfile('output','*PLI*'));
-
-% load all 
-for i = 1: length(input)
-    load(strcat(input(i).folder, '/',input(i).name));
-end
-
-
-
-% CHOOSE 2 REGIONS OF INTEREST 
-all_channels = data_clean_hum_body_norm{1}.label; % channel labels are constant across all measurements 
-roi1 = {'C3', 'CP3', 'P3'};
-roi1_idx = find(ismember(all_channels, roi1)); 
-
-roi2 = {'AFz','Fz','FCz','Cz','CPz','Pz','Oz','Fp1','Fp2','F3','F4','F7','F8','FC3','FC4','FT7','FT8','C4','T7','T8','CP4','TP7','TP8','TP9','TP10','P4','P7','P8','O1','O2'};
-roi2_idx = find(ismember(all_channels, roi2)); 
-
-
-
-% CHOOSE FREQUENCY BAND OF INTEREST (freq_string)
-freq_string = 'alpha'; 
-
-if strcmp(freq_string, 'delta')
-    freq = 1;
-
-elseif strcmp(freq_string, 'theta')
-    freq = 2; 
-
-elseif strcmp(freq_string, 'alpha')
-    freq = 3; 
-
-elseif strcmp(freq_string, 'beta')
-    freq = 4;
-
-end
-
-
-
-
-PLI_allconditions(:,1) = PLI_between_regions(PLI_hum_body_norm, roi1_idx, roi2_idx,freq);
-PLI_allconditions(:,2) = PLI_between_regions(PLI_hum_face_norm, roi1_idx, roi2_idx,freq);
-PLI_allconditions(:,3) = PLI_between_regions(PLI_hum_obj_norm, roi1_idx, roi2_idx,freq);
-
-PLI_allconditions(:,4) = PLI_between_regions(PLI_monk_body_norm, roi1_idx, roi2_idx,freq);
-PLI_allconditions(:,5) = PLI_between_regions(PLI_monk_face_norm, roi1_idx, roi2_idx,freq);
-PLI_allconditions(:,6) = PLI_between_regions(PLI_monk_obj_norm, roi1_idx, roi2_idx,freq);
-
-PLI_allconditions(:,7) = PLI_between_regions(PLI_hum_body_scr, roi1_idx, roi2_idx,freq);
-PLI_allconditions(:,8) = PLI_between_regions(PLI_hum_face_scr, roi1_idx, roi2_idx,freq);
-PLI_allconditions(:,9) = PLI_between_regions(PLI_hum_obj_scr, roi1_idx, roi2_idx,freq);
-
-PLI_allconditions(:,10) = PLI_between_regions(PLI_monk_body_scr, roi1_idx, roi2_idx,freq);
-PLI_allconditions(:,11) = PLI_between_regions(PLI_monk_face_scr, roi1_idx, roi2_idx,freq);
-PLI_allconditions(:,12) = PLI_between_regions(PLI_monk_obj_scr, roi1_idx, roi2_idx,freq);
-
-
-
-% Convert the matrix into a table with variable names
-variable_names = {'hum_body_norm','hum_face_norm','hum_obj_norm','monk_body_norm','monk_face_norm','monk_obj_norm','hum_body_scr','hum_face_scr','hum_obj_scr','monk_body_scr','monk_face_scr','monk_obj_scr'};
-T = array2table(PLI_allconditions, 'VariableNames', variable_names);
-
-
-% Write the table to an Excel file
-writetable(T, strcat('Stats_between_PLI_allconditions_roi_',freq_string,'.xlsx'));
-
-
-
-% compute normalization (normal - scramble)
-
+% pre-allocate vars
 PLI_normalized = zeros(29,6);
-for c = 1:6
-    PLI_normalized(:,c) = PLI_allconditions(:,c)-PLI_allconditions(:,c+6);
-end 
-variable_names2 = {'hum_body','hum_face','hum_obj','monk_body','monk_face','monk_obj'};
+data_long = cell(1,29);
 
-T2 = array2table(PLI_normalized, 'VariableNames', variable_names2);
+% compute within-region PLIs, separately for two pre-defined clusters
+for cluster = 1:2
 
-% Write the table to an Excel file
-writetable(T2,strcat('Stats_between_PLI_normalized_roi_',freq_string,'.xlsx'));
+    if cluster == 1
+        roi = {'C3', 'CP3', 'P3'};
+        roi_string = 'roiHumanBody'; % 'human body selective cluster'
 
+    elseif cluster == 2
+        roi = {'AFz', 'FCz', 'Cz', 'CPz', 'Pz', 'Fp1', 'Fp2', 'F3', 'F4', 'F7', 'F8', 'FC3', 'FC4', 'FT7', 'FT8', 'C3', 'C4', 'CP3', 'CP4', 'TP10', 'P3', 'P4', 'P8'} ;
+        roi_string = 'roiObjectLvl'; % 'object-level processing cluster'
+    end
 
-
-% %%
-% % plotting
-% PLI_grouplvl = mean(PLI_avg_allsubjects,3);
-% 
-% % Plot the channel*channel PLI matrix
-% figure;
-% imagesc(PLI_grouplvl);
-% 
-% % Customize the plot
-% colorbar;
-% caxis([0 1]);
-% xticks(1:33)
-% yticks(1:33)
-% 
-% axis square;  % Ensure that the aspect ratio is square
-% title('PLI Matrix');
-% 
-% % Add axis labels
-% xlabel('Channels');
-% ylabel('Channels');
+    % indices of roi
+    roi_idx = find(ismember(all_channels, roi));
 
 
 
+    % compute separately for each frequency band
+    for freq = 1:length(all_freq)
+
+        freq_string = all_freq{freq};
+
+        % extract relevant information:
+        % Within-region connectivity: subject- and condition-level
+        % PLI_allconditions(subject,condition)
+
+        PLI_allconditions(:,1) = PLI_within(PLI_hum_body_norm, roi_idx, freq);
+        PLI_allconditions(:,2) = PLI_within(PLI_hum_face_norm, roi_idx, freq);
+        PLI_allconditions(:,3) = PLI_within(PLI_hum_obj_norm, roi_idx, freq);
+
+        PLI_allconditions(:,4) = PLI_within(PLI_monk_body_norm, roi_idx, freq);
+        PLI_allconditions(:,5) = PLI_within(PLI_monk_face_norm, roi_idx, freq);
+        PLI_allconditions(:,6) = PLI_within(PLI_monk_obj_norm, roi_idx, freq);
+
+        PLI_allconditions(:,7) = PLI_within(PLI_hum_body_scr, roi_idx, freq);
+        PLI_allconditions(:,8) = PLI_within(PLI_hum_face_scr, roi_idx, freq);
+        PLI_allconditions(:,9) = PLI_within(PLI_hum_obj_scr, roi_idx, freq);
+
+        PLI_allconditions(:,10) = PLI_within(PLI_monk_body_scr, roi_idx, freq);
+        PLI_allconditions(:,11) = PLI_within(PLI_monk_face_scr, roi_idx, freq);
+        PLI_allconditions(:,12) = PLI_within(PLI_monk_obj_scr, roi_idx, freq);
 
 
+
+        % compute normalization (normal - scramble)
+        % PLI_normalized(subject,condition)
+        % conditions = 'hum_body','hum_face','hum_obj','monk_body','monk_face','monk_obj';
+        for c = 1:6
+            PLI_normalized(:,c) = PLI_allconditions(:,c)-PLI_allconditions(:,c+6);
+        end
+
+
+
+        % save data in wide format (for statistical analysis in SPSS)
+        variable_names = {'hum_body','hum_face','hum_obj','monk_body','monk_face','monk_obj'};
+        T = array2table(PLI_normalized, 'VariableNames', variable_names);
+        
+        analysis = strcat(roi_string,'_Within-PLI_',freq_string);
+        folder_path = strcat('statistics/SPSS/',analysis); 
+        file_name = strcat(analysis,'.xlsx');
+        full_file_path = fullfile(folder_path, file_name);  % combine folder path and file name
+
+        if exist(full_file_path, 'file') % check if the file name already exists
+            delete(full_file_path); % if it exists, delete it
+        end
+
+        writetable(T,full_file_path); % save new file
+
+
+
+        % transform data from wide format to long format (for statistical analysis in R)
+        % format is as follows:
+        % data_long{s}(:,subject | IV1(Species: 1.Human 2.Monkey) | IV2(Category: 1.Body 2.Face 3.Object) | Measurement(normalized PLI))
+
+        for s = 1:29
+
+            data_long{s}(1,4) = PLI_normalized(s,1); % human body
+            data_long{s}(2,4) = PLI_normalized(s,2); % human face
+            data_long{s}(3,4) = PLI_normalized(s,3); % human object
+
+            data_long{s}(4,4) = PLI_normalized(s,4); % monkey body
+            data_long{s}(5,4) = PLI_normalized(s,5); % monkey face
+            data_long{s}(6,4) = PLI_normalized(s,6); % monkey object
+
+            data_long{s}(:,1) = s; % subject number
+
+            data_long{s}(1:3,2) = 1; % human
+            data_long{s}(4:6,2) = 2; % monkey
+
+            data_long{s}(1,3) = 1; % body
+            data_long{s}(2,3) = 2; % face
+            data_long{s}(3,3) = 3; % object
+
+            data_long{s}(4,3) = 1; % body
+            data_long{s}(5,3) = 2; % face
+            data_long{s}(6,3) = 3; % object
+
+        end
+
+        % concatenate all subject-level data
+        % data_allsubj(:,subject | IV1(Species: 1.Human 2.Monkey) | IV2(Category: 1.Body 2.Face 3.Object) | Measurement(normalized PLI))
+        data_allsubj = cat(1, data_long{:});
+        variable_names = {'Subject' 'Species','Category','Measurement'};
+
+        T = array2table(data_allsubj, 'VariableNames', variable_names);
+
+        % save
+        analysis = strcat(roi_string,'_Within-PLI_',freq_string);
+        folder_path = strcat('statistics/R/',analysis); 
+        file_name = strcat(analysis,'.xlsx');
+        full_file_path = fullfile(folder_path, file_name);  % combine folder path and file name
+
+        if exist(full_file_path, 'file') % check if the file name already exists
+            delete(full_file_path); % if it exists, delete it
+        end
+
+        writetable(T,full_file_path); % save new file
+
+
+
+    end
+
+end
+
+
+
+
+%% ------------------------------------------------------------------------
+%  Between-region PLI
+%  ------------------------------------------------------------------------
+
+% pre-allocate vars 
+PLI_normalized = zeros(29,6);
+data_long = cell(1,29);
+
+% compute between-region PLIs, separately for two pre-defined clusters
+for cluster = 1:2
+
+    if cluster == 1
+
+        % connectivity of human body cluster to rest of scalp
+        roi_string = 'roiHumanBody';
+
+        % roi1 = 'human body selective cluster'
+        roi1 = {'C3', 'CP3', 'P3'};
+        roi1_idx = find(ismember(all_channels, roi1));
+
+        % roi2 = rest of scalp
+        roi2 = {'AFz','Fz','FCz','Cz','CPz','Pz','Oz','Fp1','Fp2','F3','F4','F7','F8','FC3','FC4','FT7','FT8','C4','T7','T8','CP4','TP7','TP8','TP9','TP10','P4','P7','P8','O1','O2'};
+        roi2_idx = find(ismember(all_channels, roi2));
+
+    elseif cluster == 2
+
+        % connectivity of object-level cluster to rest of scalp
+        roi_string = 'roiObjectLvl';
+
+        % roi1 = 'object-level processing cluster'
+        roi1 = {'AFz', 'FCz', 'Cz', 'CPz', 'Pz', 'Fp1', 'Fp2', 'F3', 'F4', 'F7', 'F8', 'FC3', 'FC4', 'FT7', 'FT8', 'C3', 'C4', 'CP3', 'CP4', 'TP10', 'P3', 'P4', 'P8'} ;
+        roi1_idx = find(ismember(all_channels, roi1));
+
+        % roi2 = rest of scalp
+        roi2 =     {'Fz','O1','O2','Oz','P7','T7','T8','TP7','TP8','TP9'};
+        roi2_idx = find(ismember(all_channels, roi2));
+
+
+    end
+
+
+
+    % compute separately for each frequency band
+    for freq = 1:6
+
+        freq_string = all_freq{freq};
+
+        % extract relevant information:
+        % Between-region connectivity: subject- and condition-level
+        % PLI_allconditions(subject,condition)
+
+        PLI_allconditions(:,1) = PLI_between(PLI_hum_body_norm, roi1_idx, roi2_idx,freq);
+        PLI_allconditions(:,2) = PLI_between(PLI_hum_face_norm, roi1_idx, roi2_idx,freq);
+        PLI_allconditions(:,3) = PLI_between(PLI_hum_obj_norm, roi1_idx, roi2_idx,freq);
+
+        PLI_allconditions(:,4) = PLI_between(PLI_monk_body_norm, roi1_idx, roi2_idx,freq);
+        PLI_allconditions(:,5) = PLI_between(PLI_monk_face_norm, roi1_idx, roi2_idx,freq);
+        PLI_allconditions(:,6) = PLI_between(PLI_monk_obj_norm, roi1_idx, roi2_idx,freq);
+
+        PLI_allconditions(:,7) = PLI_between(PLI_hum_body_scr, roi1_idx, roi2_idx,freq);
+        PLI_allconditions(:,8) = PLI_between(PLI_hum_face_scr, roi1_idx, roi2_idx,freq);
+        PLI_allconditions(:,9) = PLI_between(PLI_hum_obj_scr, roi1_idx, roi2_idx,freq);
+
+        PLI_allconditions(:,10) = PLI_between(PLI_monk_body_scr, roi1_idx, roi2_idx,freq);
+        PLI_allconditions(:,11) = PLI_between(PLI_monk_face_scr, roi1_idx, roi2_idx,freq);
+        PLI_allconditions(:,12) = PLI_between(PLI_monk_obj_scr, roi1_idx, roi2_idx,freq);
+
+
+
+        % compute normalization (normal - scramble)
+        % PLI_normalized(subject,condition)
+        % conditions = 'hum_body','hum_face','hum_obj','monk_body','monk_face','monk_obj';
+        for c = 1:6
+            PLI_normalized(:,c) = PLI_allconditions(:,c)-PLI_allconditions(:,c+6);
+        end
+
+
+
+        % save data in wide format (for statistical analysis in SPSS)
+        variable_names = {'hum_body','hum_face','hum_obj','monk_body','monk_face','monk_obj'};
+        T = array2table(PLI_normalized, 'VariableNames', variable_names);
+
+        analysis = strcat(roi_string,'_Between-PLI_',freq_string);
+        folder_path = strcat('statistics/SPSS/',analysis); 
+        file_name = strcat(analysis,'.xlsx');
+        full_file_path = fullfile(folder_path, file_name);  % combine folder path and file name
+
+
+
+
+        if exist(full_file_path, 'file') % check if the file name already exists
+            delete(full_file_path); % if it exists, delete it
+        end
+
+        writetable(T,full_file_path); % save new file
+
+
+
+        % transform data from wide format to long format (for statistical analysis in R)
+        % data_long{s}(:,subject | IV1(Species: 1.Human 2.Monkey) | IV2(Category: 1.Body 2.Face 3.Object) | Measurement(normalized PLI))
+
+        for s = 1:29
+
+            data_long{s}(1,4) = PLI_normalized(s,1); % human body
+            data_long{s}(2,4) = PLI_normalized(s,2); % human face
+            data_long{s}(3,4) = PLI_normalized(s,3); % human object
+
+            data_long{s}(4,4) = PLI_normalized(s,4); % monkey body
+            data_long{s}(5,4) = PLI_normalized(s,5); % monkey face
+            data_long{s}(6,4) = PLI_normalized(s,6); % monkey object
+
+            data_long{s}(:,1) = s; % subject number
+
+            data_long{s}(1:3,2) = 1; % human
+            data_long{s}(4:6,2) = 2; % monkey
+
+            data_long{s}(1,3) = 1; % body
+            data_long{s}(2,3) = 2; % face
+            data_long{s}(3,3) = 3; % object
+
+            data_long{s}(4,3) = 1; % body
+            data_long{s}(5,3) = 2; % face
+            data_long{s}(6,3) = 3; % object
+
+        end
+
+        % Concatenate all subject-level data
+        % data_allsubj(:,subject | IV1(Species: 1.Human 2.Monkey) | IV2(Category: 1.Body 2.Face 3.Object) | Measurement(normalized PLI))
+        data_allsubj = cat(1, data_long{:});
+        variable_names = {'Subject' 'Species','Category','Measurement'};
+
+        T = array2table(data_allsubj, 'VariableNames', variable_names);
+
+        % save
+        analysis = strcat(roi_string,'_Between-PLI_',freq_string);
+        folder_path = strcat('statistics/R/',analysis); 
+        file_name = strcat(analysis,'.xlsx');
+        full_file_path = fullfile(folder_path, file_name);  % combine folder path and file name
+
+
+        if exist(full_file_path, 'file') % check if the file name already exists
+            delete(full_file_path); % if it exists, delete it
+        end
+
+        writetable(T,full_file_path); % save new file
+
+
+    end
+
+end
+
+toc; 
 

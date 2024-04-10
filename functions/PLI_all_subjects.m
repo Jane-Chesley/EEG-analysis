@@ -1,37 +1,57 @@
-
 function [PLI_allfreq] = PLI_all_subjects(input, min_T1, max_T1)
 
 % pre-allocate vars
 channels = length(input{1}.label); % constant across subjects
 subjects = length(input);
 PLI_allsubjects = zeros(channels,channels,subjects); % channel*channel*subject
-PLI_allfreq = cell(1,4); % four freq bands (see below)
+PLI_allfreq = cell(1,6); % six freq bands (see below)
 
 % get indices of time-window of interest (toi)
-timepts = input{1}.time{1}; % all time points, which are constant across subjects 
-timepts = round(timepts,2); % round time points 
-T1_idx = find(timepts == min_T1, 1, 'first'):find(timepts == max_T1, 1, 'last'); % find indices of toi range 
+timepts = input{1}.time{1}; % all time points, which are constant across measurements
+timepts = round(timepts,2); % round time points
+T1_idx = find(timepts >= min_T1 & timepts <= max_T1); % find indices of toi range
 
 
-for freq = 1:4
+
+for freq = 1:6
 
 
 
     if freq == 1 % delta
-        hpfreq = 1;
-        lpfreq = 3;
+        hpfreq = 0.5;
+        lpfreq = 3.9;
+        bsfilter = 'no';
+        bsfreq = [];
 
     elseif freq == 2 % theta
         hpfreq = 4;
         lpfreq = 7;
+        bsfilter = 'no';
+        bsfreq = [];
 
     elseif freq == 3 % alpha
         hpfreq = 8;
         lpfreq = 12;
+        bsfilter = 'no';
+        bsfreq = [];
 
     elseif freq == 4 % beta
         hpfreq = 13;
         lpfreq = 30;
+        bsfilter = 'no';
+        bsfreq = [];
+
+    elseif freq == 5 % gamma_A
+        hpfreq = 35;
+        lpfreq = 45;
+        bsfilter = 'no';
+        bsfreq = [];
+
+    elseif freq == 6 % gamma_B
+        hpfreq = 25;
+        lpfreq = 45;
+        bsfilter = 'yes'; % bandstop at 30 Hz for 30 Hz white noise in stimuli 
+        bsfreq = [29 31];
 
     end
 
@@ -48,6 +68,9 @@ for freq = 1:4
         cfg.lpfreq              = lpfreq;
         cfg.hpfilter            = 'yes';
         cfg.hpfreq              = hpfreq;
+        cfg.bsfilter            = bsfilter;
+        cfg.bsfreq              = bsfreq;
+
         data                    = ft_preprocessing(cfg, data);
 
         % extract data corresponding to toi
@@ -55,7 +78,7 @@ for freq = 1:4
         % output = data_extracted{trial}(channel,timepoints)
         data_extracted = cell(1,length(data.trial)); % pre-allocate var
         for trial = 1:length(data.trial)
-            data_extracted{trial} = data.trial{trial}(:,T1_idx); % T1_idx is defined above 
+            data_extracted{trial} = data.trial{trial}(:,T1_idx); % T1_idx is defined above
         end
 
         % for each trial, assign the (channel,timepoints) matrix as input for PLI calculation

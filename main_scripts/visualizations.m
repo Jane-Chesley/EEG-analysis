@@ -20,6 +20,10 @@
 %   - Input data is stored in '/EEG-ERP/input' and includes:
 %       1. The subdirectory '/EEG_data', which contains the unprocessed EEG data for 30 subjects (.eeg, .vhdr and .vmrk files)
 %       2. The subdirectory '/event_codes', which contains the condition codes (1-12) for each trial and for each subject
+% % % %       2. 'electrode_layout.mat', which describes the topographical parameters of the electrodes used in the present EEG recordings;
+% % % %           for more details, see: easycapM3 10%-based Electrode Layout
+% % % %           https://www.easycap.de/wp-content/uploads/2018/02/Easycap-10-based-electrode-layouts.pdf
+% % % %           https://www.fieldtriptoolbox.org/template/layout/#easycapm3---extended-1020-system-with-30-channels
 
 % Outputs:
 %   - Derivative data are saved to '/EEG-ERP/derivatives'
@@ -89,7 +93,7 @@ end
 
 % channel layout for topoplots 
 load(fullfile('input','easycapM3.mat'));
-load(fullfile('input','results_clusterperm.mat'));
+% load(fullfile('input','results_clusterperm.mat'));
 
 
 

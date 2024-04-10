@@ -300,8 +300,10 @@ clearvars -except dir_parent
 %  Part 5 - stratification
 %  ------------------------------------------------------------------------
 
-% segment clean data according to all 12 conditions (data_clean_12_cond)
-% as well as by pooling across all normal and all scramble conditions (data_clean_pooled_NS)
+% segment clean data by:
+% [1] all 12 conditions (data_clean_12_cond)
+% [2] pooling across all normal and all scramble conditions (data_clean_pooled_NS)
+% [3] pooling across all conditions (data_clean_pooled_all)
 
 
 
@@ -313,15 +315,13 @@ input = dir(fullfile(strcat('derivatives','/deriv04_data_clean'), '*.mat'));
 % pre-allocate variables for speed
 data_clean_12_cond              = cell(length(input),12); 
 data_clean_pooled_NS            = cell(length(input),2); 
+data_clean_pooled_all           = cell(length(input),1);
 
 for i = 1:length(input)
 
     % load input file i
     file_clean = strcat(input(i).folder, '/',input(i).name);
     load(file_clean)
-
-    % extract subject id
-    [~, subjectid, ~] = fileparts(input(i).name); % access subject id from current input file
 
 
 
@@ -351,11 +351,22 @@ for i = 1:length(input)
     cfg.trials = data_clean.trialinfo == 7 | data_clean.trialinfo == 8 | data_clean.trialinfo == 9 | data_clean.trialinfo == 10 | data_clean.trialinfo == 11 | data_clean.trialinfo == 12;
     data_clean_pooled_NS{i, 2} = ft_selectdata(cfg,data_clean);
 
+
+
+    % Part 5.3 No condition stratification ---------------------------------------------------
+    % pool across all conditions 
+    % re-structure data: store all clean data in a subject x condition cell array
+    cfg = [];
+    cfg.trials = 'all';
+    data_clean_pooled_all{i, 1} = ft_selectdata(cfg,data_clean);
+
+
+
 end
 
 
 
-% create separate variables for each condition (this reduces file size to optimize saving and loading)
+% create separate variables for each condition (this reduces file size and optimizes saving and loading)
 data_clean_hum_body_norm    = data_clean_12_cond(:, 1);
 data_clean_hum_face_norm    = data_clean_12_cond(:, 2); 
 data_clean_hum_obj_norm     = data_clean_12_cond(:, 3); 
@@ -380,43 +391,9 @@ data_clean_pooled_scramble  = data_clean_pooled_NS(:,2);
 % save all condition-level 'data_clean...' variables 
 clear data_clean_12_cond
 clear data_clean_pooled_NS
+clear data_clean
 variables = who('*data_clean*');  % Get variables containing 'data_clean' in their name
 for i = 1:length(variables)
     save(fullfile('output', [variables{i} '.mat']), variables{i});
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-% %% Notes
-%
-%
-% % % iterate through event numbers for each subject, save them as separate
-% % % files, each names as the subject number e.g. 'subject01.mat':'subject31.mat'
-% for i = 1:length(subjectinfo.eventNums)
-%     event_codes = subjectinfo.eventNums{i};
-%     subjectid = sprintf('subject%02d',i)
-%     save(subjectid, 'event_codes')
-% end
-%
-
-
-%       2. 'electrode_layout.mat', which describes the topographical parameters of the electrodes used in the present EEG recordings;
-%           for more details, see: easycapM3 10%-based Electrode Layout
-%           https://www.easycap.de/wp-content/uploads/2018/02/Easycap-10-based-electrode-layouts.pdf
-%           https://www.fieldtriptoolbox.org/template/layout/#easycapm3---extended-1020-system-with-30-channels
-
-
 
