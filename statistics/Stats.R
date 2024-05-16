@@ -1,3 +1,4 @@
+# This script runs repeated measures ANOVA on normalized (Normal - Scramble) PLI values for a 2x3 (Species: Human/Monkey X Category: Body/Face/Object) design 
 # clean environment 
 rm(list = ls())
 
@@ -17,62 +18,21 @@ library(ggplot2)
 dir_parent = "/Users/jane_chesley/Documents/Github/Dataset_dynamic/EEG-analysis/statistics/R"
 
 # data to analyze 
-# Create a dataframe
-all_data <- data.frame(
-folder_name = c("roiObjectLvl_Within-PLI_delta",
-                "roiHumanBody_Within-PLI_delta",
-                "roiObjectLvl_Between-PLI_delta",
-                "roiHumanBody_Between-PLI_delta",
-                "roiObjectLvl_Within-PLI_theta",
-                "roiHumanBody_Within-PLI_theta",
-                "roiObjectLvl_Between-PLI_theta",
-                "roiHumanBody_Between-PLI_theta",
-                "roiObjectLvl_Within-PLI_alpha",
-                "roiHumanBody_Within-PLI_alpha",
-                "roiObjectLvl_Between-PLI_alpha",
-                "roiHumanBody_Between-PLI_alpha",
-                "roiObjectLvl_Within-PLI_beta",
-                "roiHumanBody_Within-PLI_beta",
-                "roiObjectLvl_Between-PLI_beta",
-                "roiHumanBody_Between-PLI_beta",
-                "roiObjectLvl_Within-PLI_gamma_A",
-                "roiHumanBody_Within-PLI_gamma_A",
-                "roiObjectLvl_Between-PLI_gamma_A",
-                "roiHumanBody_Between-PLI_gamma_A",
-                "roiObjectLvl_Within-PLI_gamma_B",
-                "roiHumanBody_Within-PLI_gamma_B",
-                "roiObjectLvl_Between-PLI_gamma_B",
-                "roiHumanBody_Between-PLI_gamma_B"),
 
-file_name = c("roiObjectLvl_Within-PLI_delta.xlsx",
-            "roiHumanBody_Within-PLI_delta.xlsx",
-            "roiObjectLvl_Between-PLI_delta.xlsx",
-            "roiHumanBody_Between-PLI_delta.xlsx",
-            "roiObjectLvl_Within-PLI_theta.xlsx",
-            "roiHumanBody_Within-PLI_theta.xlsx",
-            "roiObjectLvl_Between-PLI_theta.xlsx",
-            "roiHumanBody_Between-PLI_theta.xlsx",
-            "roiObjectLvl_Within-PLI_alpha.xlsx",
-            "roiHumanBody_Within-PLI_alpha.xlsx",
-            "roiObjectLvl_Between-PLI_alpha.xlsx",
-            "roiHumanBody_Between-PLI_alpha.xlsx",
-            "roiObjectLvl_Within-PLI_beta.xlsx",
-            "roiHumanBody_Within-PLI_beta.xlsx",
-            "roiObjectLvl_Between-PLI_beta.xlsx",
-            "roiHumanBody_Between-PLI_beta.xlsx",
-            "roiObjectLvl_Within-PLI_gamma_A.xlsx",
-            "roiHumanBody_Within-PLI_gamma_A.xlsx",
-            "roiObjectLvl_Between-PLI_gamma_A.xlsx",
-            "roiHumanBody_Between-PLI_gamma_A.xlsx",
-            "roiObjectLvl_Within-PLI_gamma_B.xlsx",
-            "roiHumanBody_Within-PLI_gamma_B.xlsx",
-            "roiObjectLvl_Between-PLI_gamma_B.xlsx",
-            "roiHumanBody_Between-PLI_gamma_B.xlsx")
-)
+# List all folders in the parent directory
+# Do not list subfolders ('recursive = FALSE')
+all_folders <- list.dirs(dir_parent, full.names = FALSE, recursive = FALSE)
 
+# Filter folder names: keep only folders that have "PLI_normalized" in their name
+filtered_folders <- all_folders[grep("PLI_normalized", all_folders, fixed = TRUE)]
 
+# Construct file names from folder names 
+file_names <- paste(filtered_folders, ".xlsx", sep = "")
 
-# Assuming df is your dataframe
+# data to analyze 
+all_data <- data.frame(folder_name = filtered_folders, file_name = file_names)
+
+# run analysis for each data file 
 for (i in 1:nrow(all_data)) {
   current_folder <- all_data[i, "folder_name"]
   current_file <- all_data[i, "file_name"]

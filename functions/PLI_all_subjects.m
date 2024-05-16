@@ -4,7 +4,7 @@ function [PLI_allfreq] = PLI_all_subjects(input, min_T1, max_T1)
 channels = length(input{1}.label); % constant across subjects
 subjects = length(input);
 PLI_allsubjects = zeros(channels,channels,subjects); % channel*channel*subject
-PLI_allfreq = cell(1,6); % six freq bands (see below)
+PLI_allfreq = cell(1,7); % six freq bands (see below)
 
 % get indices of time-window of interest (toi)
 timepts = input{1}.time{1}; % all time points, which are constant across measurements
@@ -13,7 +13,7 @@ T1_idx = find(timepts >= min_T1 & timepts <= max_T1); % find indices of toi rang
 
 
 
-for freq = 1:6
+for freq = 1:7
 
 
 
@@ -53,6 +53,12 @@ for freq = 1:6
         bsfilter = 'yes'; % bandstop at 30 Hz for 30 Hz white noise in stimuli 
         bsfreq = [29 31];
 
+    elseif freq == 7 % broadband signal 1-45 Hz 
+        hpfreq = 1;
+        lpfreq = 45;
+        bsfilter = 'no';
+        bsfreq = [];
+
     end
 
 
@@ -76,18 +82,19 @@ for freq = 1:6
         % extract data corresponding to toi
         % input = data.trial{trial}(channel,timepoints)
         % output = data_extracted{trial}(channel,timepoints)
-        data_extracted = cell(1,length(data.trial)); % pre-allocate var
-        for trial = 1:length(data.trial)
+        total_trials = length(data.trial); 
+        data_extracted = cell(1,total_trials); % pre-allocate var
+        for trial = 1:total_trials
             data_extracted{trial} = data.trial{trial}(:,T1_idx); % T1_idx is defined above
         end
 
         % for each trial, assign the (channel,timepoints) matrix as input for PLI calculation
         % PLI calculation outputs a channel*channel matrix, with cells representing PLI values
         % output = PLI_output(channel,channel,trial)
-        PLI_output = zeros(channels,channels,length(data_extracted)); % pre-allocate var
-        for trial = 1:length(data_extracted)
-            PLI_input = data_extracted{trial};
-            PLI_output(:,:,trial) = PhaseLagIndex(PLI_input);
+        PLI_output = zeros(channels,channels,total_trials); % pre-allocate var
+        for trial = 1:total_trials
+            PLI_input = data_extracted{trial}; 
+            PLI_output(:,:,trial) = PLI_single_trial(PLI_input);
         end
 
         % average across all trials (3rd dimension)
