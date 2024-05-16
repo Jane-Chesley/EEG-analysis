@@ -52,7 +52,9 @@ To get started with this pipeline, follow these steps:
 4. Launch MATLAB and navigate to the repository directory '/main_scripts'
 5. Save raw EEG data in the repository directory '/input' 
 6. Execute the scripts sequentially (see below: Roadmap)
-7. View output in the repository directory '/output'
+7. View processed data in the repository directory '/output'
+8. Launch RStudio and navigate to the repository directory '/statistics' 
+9. Execute 'Stats.R' and view statistical results and figures  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 <br>
