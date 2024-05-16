@@ -37,11 +37,22 @@ To get started with this pipeline, follow these steps:
     - Statistics and Machine Learning Toolbox
     - Bioinformatics Toolbox
     - FieldTrip Toolbox
-2. Download or clone this repository, 'EEG-analysis'
-3. Launch MATLAB and navigate to the repository directory '/main_scripts'
-4. Save raw EEG data in the repository directory '/input' 
-5. Execute the scripts sequentially (see below: Roadmap)
-6. View output in the repository directory '/output'
+2. Install RStudio on your system, along with the following packages:
+    - ggplot2
+    - ggpubr
+    - rstatix
+    - dplyr
+    - tidyverse
+    - xlsx
+    - readxl
+    - knitr
+    - broom
+    - car 
+3. Download or clone this repository, 'EEG-analysis'
+4. Launch MATLAB and navigate to the repository directory '/main_scripts'
+5. Save raw EEG data in the repository directory '/input' 
+6. Execute the scripts sequentially (see below: Roadmap)
+7. View output in the repository directory '/output'
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 <br>
