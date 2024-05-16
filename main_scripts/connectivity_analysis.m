@@ -33,8 +33,15 @@
 %
 % Outline of script content:
 %   1. Script setup
-%   2. PLI computation
-%   3. Extract PLIs of interest (within-region and between-region) 
+%   2. Load data and define parameters  
+%   3. Simulations
+% 		3.1 Construct simulated data 
+%		3.2 Compute PLIs for all channel pairs 
+% 		3.3 Compute within-region PLIs 
+% 	4. Real data 
+% 		4.1 Real data: Compute PLIs for all channel pairs 
+% 		4.2 Real data: Compute within-region PLIs
+% 		4.3 Real data: Compute between-region PLIs
 %   
 % ------------------------------------------------------------------------
 

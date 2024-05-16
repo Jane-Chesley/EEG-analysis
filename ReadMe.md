@@ -51,10 +51,31 @@ To get started with this pipeline, follow these steps:
 3. Download or clone this repository, 'EEG-analysis'
 4. Launch MATLAB and navigate to the repository directory '/main_scripts'
 5. Save raw EEG data in the repository directory '/input' 
-6. Execute the scripts sequentially (see below: Roadmap)
-7. View processed data in the repository directory '/output'
+6. Preprocess raw EEG data with the script 'preprocessing.m', which includes:
+    - Trial segmentation and extraction
+    - Event labeling
+    - Signal re-referencing
+    - Sampling reduction
+    - Electrooculogram (EOG) artifact removal 
+    - Removal of outlier trials
+    - Stratification by condition 
+7. Perform time-frequency power analysis of preprocessed EEG data with the script 'TF_power_analysis.m', which includes:
+    - Bandpass filtering
+    - Morlet wavelet transformation
+    - Baseline correction 
+    - Data visualizations
+8. Perform phase-based connectivity analysis with the script 'connectivity_analysis.m'. which includes:
+    - Single-trial 5-D Phase-Lag Index (PLI) computations (frequency x channel x channel x subject x condition)
+    - PLI computation within-regions
+    - PLI computation between-regions
+    - Validation of computations with simulated data 
+9. View all processed data in the repository directory '/output'
 8. Launch RStudio and navigate to the repository directory '/statistics' 
-9. Execute 'Stats.R' and view statistical results and figures  
+9. Execute 'Stats.R', which includes:
+    - Repeated measures ANOVA on PLI data 
+    - Post-hoc paired t-tests 
+    - Data visualizations 
+10. View all statistical results and plots in the repository directory '/statistics/R' 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 <br>
