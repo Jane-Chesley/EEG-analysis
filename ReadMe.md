@@ -75,7 +75,7 @@ To get started with this pipeline, follow these steps:
     - Repeated measures ANOVA on PLI data 
     - Post-hoc paired t-tests 
     - Data visualizations 
-10. View all statistical results and plots in the repository directory '/statistics/R' 
+10. View statistical results and plots in the repository directory '/statistics/R' 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 <br>
