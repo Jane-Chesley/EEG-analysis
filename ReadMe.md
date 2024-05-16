@@ -65,7 +65,8 @@ To get started with this pipeline, follow these steps:
     - Baseline correction 
     - Data visualizations
 8. Perform phase-based connectivity analysis with the script 'connectivity_analysis.m'. which includes:
-    - Single-trial 5-D Phase-Lag Index (PLI) computations (frequency x channel x channel x subject x condition)
+    - Single-trial 5-D Phase-Lag Index (PLI) computations 
+    (frequency x channel x channel x subject x condition)
     - PLI computation within-regions
     - PLI computation between-regions
     - Validation of computations with simulated data 
