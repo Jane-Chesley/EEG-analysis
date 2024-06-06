@@ -47,6 +47,8 @@ all_data <- data.frame(folder_name = filtered_folders, file_name = file_names)
 # STEP 3: ART PROCEDURE  
 # ------------------------------------------------
 
+# STEP 3.1 Data Inspection and Preparation
+
 # start loop to analyze all data  
 i <-  1
 current_folder <- all_data[i, "folder_name"]
@@ -69,6 +71,10 @@ df <- read_excel(current_file)
 str(df)
 head(df, n=10) # display only the first 10 observations
 
+
+
+# STEP 3.2 Convert columns to factors 
+
 # the present datasets have numbers (format <dbl>) in subject and condition columns, which is not suitable for ART 
 # convert the columns to factors (strings; format <fct>)
 df$Subject <- factor(df$Subject)
@@ -85,7 +91,11 @@ head(df, n=10) # display only the first 10 observations
     # Col3: Category (IV 2), with levels 'body', 'face', and 'object'
     # Col4: 'Measurement', which represents the response variable of PLI values
 
-# transform the data, to be analyzed with a repeated measures ANOVA (rmANOVA)
+
+
+# STEP 3.3 Transform data for Repeated Measures ANOVA (rmANOVA) 
+
+# transform the data, to be analyzed with a rmANOVA
 # rmANOVA includes an Error term 
 transformedDataRM <- art(Measurement ~ Species*Category + Error(Subject), data=df)
 
@@ -98,9 +108,14 @@ transformedDataRM <- art(Measurement ~ Species*Category + Error(Subject), data=d
 summary(transformedDataRM)
 
 # if the data was transformed correctly, proceed with the statistical test, rmANOVA 
-anova(transformedDataRM)
+rmANOVA_result <- anova(transformedDataRM)
+
+
+
+# STEP 3.4 Transform data for Mixed Effects Model 
 
 # transform the data, to be analyzed with a mixed effects model 
+# mixed effects model includes a grouping term '(1|Subject)'
 transformedDataME <- art(Measurement ~ Species*Category + (1|Subject), data=df)
 
 # inspect the transformed data 
@@ -108,4 +123,8 @@ summary(transformedDataME)
 
 # if the data was transformed correctly, proceed with the statistical test, mixed effects model 
 anova(transformedDataME)
+
+
+
+# STEP 3.5 Save data 
 
