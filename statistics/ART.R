@@ -122,9 +122,25 @@ transformedDataME <- art(Measurement ~ Species*Category + (1|Subject), data=df)
 summary(transformedDataME)
 
 # if the data was transformed correctly, proceed with the statistical test, mixed effects model 
-anova(transformedDataME)
+MEModel_result <- anova(transformedDataME)
 
 
 
-# STEP 3.5 Save data 
+# STEP 3.5 Save results 
 
+# save results to in the current wd as 'ART_output.xlsx'
+# Check if the file already exists
+if (file.exists("ART_output.xlsx")) {
+  # If the file exists, delete it
+  file.remove("ART_output.xlsx")
+}
+
+# sheet1 of the xlsx includes raw data in wide format (to later cross-check results in SPSS)
+wide_data <- pivot_wider(df, names_from = c(Species, Category), values_from = Measurement)
+write.xlsx(wide_data, "ART_output.xlsx", sheetName = "Raw_data")
+
+# sheet2 includes results of rmAVOVA
+write.xlsx(rmANOVA_result, "ART_output.xlsx", sheetName = "rmANOVA_ART_result", append = TRUE)
+
+# sheet3 includes results of Mixed Effects Model
+write.xlsx(MEModel_result, "ART_output.xlsx", sheetName = "MEModel_result", append = TRUE)
