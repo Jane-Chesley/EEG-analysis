@@ -40,8 +40,9 @@
 % 		3.3 Compute within-region PLIs 
 % 	4. Real data 
 % 		4.1 Real data: Compute PLIs for all channel pairs 
-% 		4.2 Real data: Compute within-region PLIs
-% 		4.3 Real data: Compute between-region PLIs
+% 		4.2 Real data: Compute within-region PLIs for pre-defined ROIs
+% 		4.3 Real data: Compute between-region PLIs for pre-defined ROIs
+%       4.4 Real data: PLI data-driven ROI selection
 %   
 % ------------------------------------------------------------------------
 
@@ -374,7 +375,7 @@ fprintf(logfile, 'PLI 13/14 completed\n');
 save('output/PLI_pooled_normal.mat','PLI_pooled_normal')
 
 PLI_pooled_scramble = PLI_all_subjects(data_clean_pooled_scramble, min_T1, max_T1);
-fprintf(logfile, 'PLI 14/14 completed\n');
+% fprintf(logfile, 'PLI 14/14 completed\n');
 save('output/PLI_pooled_scramble.mat','PLI_pooled_scramble')
 
 fclose(logfile); % close the log file
@@ -932,10 +933,86 @@ end
 
 
 
+%% ------------------------------------------------------------------------
+%  Part 4.3 - PLI data-driven ROI selection
+%  ------------------------------------------------------------------------
+% Select ROI based on statistical comparison of PLI data of normal versus scramble conditions
 
+% load input data
+% input data are 4-D PLI data (freq x channel x channel x subject) for normal and scramble conditions, computed above in step 4.1
+load(fullfile('output','PLI_pooled_normal.mat'));
+load(fullfile('output','PLI_pooled_scramble.mat'));
+load(fullfile('output','all_channels.mat'))
+all_freq = {'delta';'theta';'alpha';'beta';'gamma_A_35_45';'gamma_B_25_45_BS30';'broadband_1_45'};
+addpath('/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Functions/Shapiro-Wilk and Shapiro-Francia normality tests.')
+addpath('/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Functions/fdr_bh')
 
+broadband = 7; 
+subject = 1; 
 
+% restructure data for normal and scramble conditions
+for i = 1:length(all_channels)
+    for j = 1:length(all_channels)
+        normal_condition{i,j} = squeeze(PLI_pooled_normal{broadband}(i,j,:));
+        scramble_condition{i,j} = squeeze(PLI_pooled_scramble{broadband}(i,j,:));
+    end
+end 
 
+% statistically compare normal and scramble conditions 
+for i = 1:length(all_channels)
+
+    for j = 1:length(all_channels)
+
+        % Label current channel pair 
+        compare_conditions{i,j}.channelpair = strcat(all_channels{i},'-',all_channels{j});
+        % Perform Shapiro-Wilk test on paired differences to check assumption of normality 
+        differences = normal_condition{i,j} - scramble_condition{i,j};
+        [H, pValue, W] = swtest(differences);
+
+        if H == 0
+            sw_result = 'normality assumption met';
+        else
+            sw_result = 'ATTN: normality assumption violated';
+        end
+
+        compare_conditions{i,j}.shapirowilk = sw_result;
+
+        % Perform a one-tailed paired samples t-test (but only interpret this if the assumption of normality is met)
+        % 'Tail', 'right' = right-tailed, x > y 
+        [h, p, ci, stats] = ttest(normal_condition{i,j}, scramble_condition{i,j}, 'Tail', 'right');
+        compare_conditions{i,j}.ttestPvalue = p; 
+
+        % Perform non-parametric Wilcoxon-rank test 
+        % (but only intepret if the assumption of normality is violated)
+        [p2, h, stats] = signrank(differences);
+        compare_conditions{i,j}.WilcoxonRankPvalue = p2;         
+
+    end
+end
+
+% Consolidate results
+dummy = rand(33); % Create a  dummy variable representing a 33x33 matrix 
+upper_triangle_idx = ~(tril(dummy)); % Get logical indices of one triangle excluding diagonal 
+compare_conditions_unique = compare_conditions(upper_triangle_idx) % Extract all unique channel pairs form one triangle of the matrix
+
+for i = 1:length(compare_conditions_unique)
+    compare_conditions_unique{i,2} = compare_conditions_unique{i,1}.channelpair;
+    compare_conditions_unique{i,3} = compare_conditions_unique{i,1}.WilcoxonRankPvalue;
+end 
+
+% Perform FDR-correction for multiple comparisons 
+raw_pValues = cell2mat(compare_conditions_unique(:,3))
+q = 0.05;
+[h, crit_p, adj_ci_cvrg, adj_p]=fdr_bh(raw_pValues,q,'pdep','yes');
+adj_p = round(adj_p,3)
+
+% Assign adjusted p-values to the fourth column 
+for i = 1:length(compare_conditions_unique)
+    compare_conditions_unique{i, 4} = adj_p(i);
+    if adj_p(i) <= 0.05
+        compare_conditions_unique{i,5} = 'significant';
+    end
+end
 
 
 
