@@ -370,13 +370,15 @@ PLI_monk_obj_scr = PLI_all_subjects(data_clean_monk_obj_scr, min_T1, max_T1);
 fprintf(logfile, 'PLI 12/14 completed\n');
 save('output/PLI_monk_obj_scr.mat','PLI_monk_obj_scr')
 
+
+%% 
 PLI_pooled_normal = PLI_all_subjects(data_clean_pooled_normal, min_T1, max_T1);
-fprintf(logfile, 'PLI 13/14 completed\n');
-save('output/PLI_pooled_normal.mat','PLI_pooled_normal')
+% fprintf(logfile, 'PLI 13/14 completed\n');
+save('output/PLI_pooled_normal_500_1000ms.mat','PLI_pooled_normal')
 
 PLI_pooled_scramble = PLI_all_subjects(data_clean_pooled_scramble, min_T1, max_T1);
 % fprintf(logfile, 'PLI 14/14 completed\n');
-save('output/PLI_pooled_scramble.mat','PLI_pooled_scramble')
+save('output/PLI_pooled_scramble_500_1000ms.mat','PLI_pooled_scramble')
 
 fclose(logfile); % close the log file
 
