@@ -60,8 +60,10 @@ restoredefaultpath;
 [dir_parent, ~, ~] = fileparts(pwd);
 cd(dir_parent);
 
-% add custom functions to path
+% add functions to path
 addpath('functions');
+addpath('/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Functions/Shapiro-Wilk and Shapiro-Francia normality tests.')
+addpath('/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Functions/fdr_bh')
 
 % specify the path to the Fieldtrip Toolbox on your system
 dir_FT = '/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Collections/FieldTrip';
@@ -88,7 +90,7 @@ end
 
 % define time-window of interest (TOI) in seconds
 min_T1 = 0; % TOI minimum 
-max_T1 = 0.5; % TOI maximum 
+max_T1 = 1; % TOI maximum 
 
 % label all frequency bands of interest 
 % the stimuli used for the present experiment contain motion artifacts at 30 Hz
@@ -375,7 +377,7 @@ fprintf(logfile, 'PLI 13/14 completed\n');
 save('output/PLI_pooled_normal.mat','PLI_pooled_normal')
 
 PLI_pooled_scramble = PLI_all_subjects(data_clean_pooled_scramble, min_T1, max_T1);
-% fprintf(logfile, 'PLI 14/14 completed\n');
+fprintf(logfile, 'PLI 14/14 completed\n');
 save('output/PLI_pooled_scramble.mat','PLI_pooled_scramble')
 
 fclose(logfile); % close the log file
@@ -934,21 +936,38 @@ end
 
 
 %% ------------------------------------------------------------------------
-%  Part 4.3 - PLI data-driven ROI selection
+%  Part 4.3 - PLI data-driven ROI selection 
 %  ------------------------------------------------------------------------
 % Select ROI based on statistical comparison of PLI data of normal versus scramble conditions
+% Compute this on a new time-window of 500-1000ms post-stimulus 
+
+%% Part 4.3.1 Compute PLIs on new time window 
+
+% define time-window of interest (TOI) in seconds
+min_T1 = 0.5; % TOI minimum 
+max_T1 = 1; % TOI maximum 
 
 % load input data
-% input data are 4-D PLI data (freq x channel x channel x subject) for normal and scramble conditions, computed above in step 4.1
-load(fullfile('output','PLI_pooled_normal.mat'));
-load(fullfile('output','PLI_pooled_scramble.mat'));
+load(fullfile('output','data_clean_pooled_normal.mat'))
+load(fullfile('output','data_clean_pooled_scramble.mat'))
 load(fullfile('output','all_channels.mat'))
 all_freq = {'delta';'theta';'alpha';'beta';'gamma_A_35_45';'gamma_B_25_45_BS30';'broadband_1_45'};
-addpath('/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Functions/Shapiro-Wilk and Shapiro-Francia normality tests.')
-addpath('/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Functions/fdr_bh')
 
-freq = 7;
+PLI_pooled_normal = PLI_all_subjects(data_clean_pooled_normal, min_T1, max_T1);
+save('output/PLI_pooled_normal_500_1000ms.mat','PLI_pooled_normal')
 
+PLI_pooled_scramble = PLI_all_subjects(data_clean_pooled_scramble, min_T1, max_T1);
+save('output/PLI_pooled_scramble_500_1000ms.mat','PLI_pooled_scramble')
+
+
+%% Statistically compare Normal vs Scramble conditions 
+
+% load input data
+% input data are 4-D PLI data (freq x channel x channel x subject) for normal and scramble conditions, computed above 
+load(fullfile('output','PLI_pooled_normal_500_1000ms.mat'));
+load(fullfile('output','PLI_pooled_scramble_500_1000ms.mat'));
+
+% begin loop for all frequencies 
 for freq = 1:length(all_freq)
 
     % restructure data for normal and scramble conditions
@@ -1015,7 +1034,6 @@ for freq = 1:length(all_freq)
             compare_conditions_unique{i,5} = 'significant p-adj (Wilcoxon Rank)';
         else
             compare_conditions_unique{i,5} = [];
-
         end
     end
 
@@ -1032,13 +1050,39 @@ for freq = 1:length(all_freq)
         % col3 = uncorrected p-value (Wilcoxon Rank)
         % col4 = corrected p-value (FDR)
         % col5 = 'significant' or not '[]'
-    NS_ROI_0_1000ms{freq} = compare_conditions_unique;
-    clear compare_conditions_unique 
+    NS_ROI_500_1000ms{freq} = compare_conditions_unique;
+%     clear compare_conditions_unique compare_conditions differences normal_condition scramble_condition adj_p raw_pValues p p2
+    
+    % Create connectivity matrices, based on WR uncorrected p-values 
+    for i = 1:size(compare_conditions,1)
+        for j = 1:size(compare_conditions,2)
+            connectivity_matrix_WR_p{freq}(i,j) = compare_conditions{i,j}.WilcoxonRankPvalue;
+        end       
+    end
+
+    % Create connectivity matrices, based on WR FDR-corrected p-values 
+    matrix_adj_p = zeros(length(all_channels)); % create a channel x channel matrix of zeros 
+    matrix_adj_p(triu(true(length(all_channels)), 1)) = adj_p; % assign adjusted P-values to upper triangle
+    matrix_adj_p(tril(true(length(all_channels)), -1)) = adj_p; % assign adjusted P-values to lower triangle 
+
+    connectivity_matrix_WR_adj_p{freq} = matrix_adj_p;
 
 end
 
-% Save
-save('output/NS_ROI_0_1000ms.mat','NS_ROI_0_1000ms')
+% Save all results 
+save('output/NS_ROI_500_1000ms.mat','NS_ROI_500_1000ms')
+
+% Save connectivity matrices as tables for visualizations in R
+for i = 1:length(all_freq)
+    T = array2table(connectivity_matrix_WR_p{i}); 
+    writetable(T,strcat('output/','connectivity_matrix_WR_p_',all_freq{i},'.xlsx'),"WriteVariableNames",0);
+    
+    T2 = array2table(connectivity_matrix_WR_adj_p{i}); 
+    writetable(T2,strcat('output/','connectivity_matrix_WR_adj_p_',all_freq{i},'.xlsx'),"WriteVariableNames",0);
+end 
+
+
+
 
 %% Notes 
 
@@ -1049,3 +1093,14 @@ save('output/NS_ROI_0_1000ms.mat','NS_ROI_0_1000ms')
 % for i = 1:length(variables)
 %     save(fullfile('output', [variables{i} '.mat']), variables{i}); % save all to /output
 % end
+
+% % Create a 33x33 matrix
+% matrix = zeros(5)
+% 
+% % Define the values you want to assign to the upper or lower triangle
+% values = [1:10]; % Example array of values
+% matrix(triu(true(5), 1)) = values; % assign values to upper triangle
+% matrix(tril(true(5), -1)) = values; % assign values to lower triangle 
+% 
+% % Display the modified matrix
+% disp(matrix)
