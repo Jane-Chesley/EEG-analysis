@@ -60,10 +60,8 @@ restoredefaultpath;
 [dir_parent, ~, ~] = fileparts(pwd);
 cd(dir_parent);
 
-% add functions to path
+% add custom functions to path
 addpath('functions');
-addpath('/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Functions/Shapiro-Wilk and Shapiro-Francia normality tests.')
-addpath('/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Functions/fdr_bh')
 
 % specify the path to the Fieldtrip Toolbox on your system
 dir_FT = '/Users/jane_chesley/Library/Application Support/MathWorks/MATLAB Add-Ons/Collections/FieldTrip';
@@ -668,7 +666,7 @@ end
 
 
 %% ------------------------------------------------------------------------
-%  Part 4.2 - Real data: Compute between-region PLIs 
+%  Part 4.3 - Real data: Compute between-region PLIs 
 %  ------------------------------------------------------------------------
 % Between-region PLI refers to the connectivity between two specified clusters 
 % In the present analysis, we investigate the connectivity between two clusters and the rest of the scalp 
@@ -936,7 +934,7 @@ end
 
 
 %% ------------------------------------------------------------------------
-%  Part 4.3 - PLI data-driven ROI selection 
+%  Part 4.4 - PLI data-driven ROI selection 
 %  ------------------------------------------------------------------------
 % Select ROI based on statistical comparison of PLI data of normal versus scramble conditions
 % Compute this on a new time-window of 500-1000ms post-stimulus 
@@ -967,13 +965,27 @@ save('output/PLI_pooled_scramble_500_1000ms.mat','PLI_pooled_scramble')
 load(fullfile('output','PLI_pooled_normal_500_1000ms.mat'));
 load(fullfile('output','PLI_pooled_scramble_500_1000ms.mat'));
 
+% pre-allocate variables for speed
+NS_500_1000ms = cell(1,length(all_freq));
+
 % begin loop for all frequencies 
 for freq = 1:length(all_freq)
+    
+    % pre-allocate variables for speed 
+    normal_condition = cell(length(all_channels),length(all_channels));
+    scramble_condition = cell(length(all_channels),length(all_channels));
+    results_normality = cell(length(all_channels),length(all_channels));
+    results_ttest = zeros(length(all_channels));
+    results_wilrank = zeros(length(all_channels));
 
     % restructure data for normal and scramble conditions
-    for i = 1:length(all_channels)
+    % E.g.  original data = PLI_pooled_normal{freq}(channel,channel,subject)
+    %       restructured data = normal_condition{channel,channel}(subject)
+    for i = 1:length(all_channels) % loop for all channel pairs 
         for j = 1:length(all_channels)
-            normal_condition{i,j} = squeeze(PLI_pooled_normal{freq}(i,j,:));
+            % create a channel x channel cell with all subject data in each cell,
+            % separately for each condition 
+            normal_condition{i,j} = squeeze(PLI_pooled_normal{freq}(i,j,:)); 
             scramble_condition{i,j} = squeeze(PLI_pooled_scramble{freq}(i,j,:));
         end
     end
@@ -983,103 +995,101 @@ for freq = 1:length(all_freq)
 
         for j = 1:length(all_channels)
 
-            % Label current channel pair
-            compare_conditions{i,j}.channelpair = strcat(all_channels{i},'-',all_channels{j});
 
-            % Perform Shapiro-Wilk test on paired differences to check assumption of normality
+            % For each channel pair, calculate paired differences  
             differences = normal_condition{i,j} - scramble_condition{i,j};
-            [H, pValue, W] = swtest(differences);
 
+
+            % Perform Shapiro-Wilk test on paired differences to check assumption of normality 
+            [H, pValue, W] = swtest(differences);
+            % Store results in a channel x channel matrix 
             if H == 0
-                sw_result = 'normality assumption met';
+                results_normality{i,j} = 'normal';
             else
-                sw_result = 'ATTN: normality assumption violated';
+                results_normality{i,j} = 'ATTN: normality assumption violated';
             end
 
-            compare_conditions{i,j}.shapirowilk = sw_result;
 
-            % Perform a one-tailed paired samples t-test (but only interpret this if the assumption of normality is met)
+            % Perform a one-tailed paired samples t-test 
+            % *but only interpret this if the assumption of normality is met*
             % 'Tail', 'right' = right-tailed, x > y
             [h, p, ci, stats] = ttest(normal_condition{i,j}, scramble_condition{i,j}, 'Tail', 'right');
-            compare_conditions{i,j}.ttestPvalue = p;
+            % Store results in a channel x channel matrix 
+            results_ttest(i,j) = p; 
+
 
             % Perform non-parametric Wilcoxon-rank test
-            % (but only intepret if the assumption of normality is violated)
+            % *but only intepret if the assumption of normality is violated*
             [p2, h, stats] = signrank(differences);
-            compare_conditions{i,j}.WilcoxonRankPvalue = p2;
+            % Store results in a channel x channel matrix 
+            results_wilrank(i,j) = p2;
 
         end
     end
+    
+    % Extract p-values for all unique channel pairs, excluding same-channel pairs 
+    dummy = ones(33);
+    tri_idx = ~tril(dummy); % get indices of the upper triangle, excluding the diagonal 
+    pairs_unique = results_wilrank(tri_idx);
 
-    % Consolidate results
-    dummy = rand(33); % Create a  dummy variable representing a 33x33 matrix
-    upper_triangle_idx = ~(tril(dummy)); % Get logical indices of one triangle excluding diagonal
-    compare_conditions_unique = compare_conditions(upper_triangle_idx); % Extract all unique channel pairs form one triangle of the matrix
-
-    for i = 1:length(compare_conditions_unique)
-        compare_conditions_unique{i,2} = compare_conditions_unique{i,1}.channelpair;
-        compare_conditions_unique{i,3} = compare_conditions_unique{i,1}.WilcoxonRankPvalue;
-    end
-
-    % Perform FDR-correction for multiple comparisons
-    raw_pValues = cell2mat(compare_conditions_unique(:,3));
+    % Perform FDR-correction for multiple comparisons 
+    raw_pValues = pairs_unique; 
     q = 0.05;
-    [h, crit_p, adj_ci_cvrg, adj_p]=fdr_bh(raw_pValues,q,'pdep','yes');
+    [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(raw_pValues,q,'pdep','yes');
     adj_p = round(adj_p,3);
 
-    % Assign adjusted p-values to the fourth column
-    for i = 1:length(compare_conditions_unique)
-        compare_conditions_unique{i, 4} = adj_p(i);
-        if adj_p(i) <= 0.05
-            compare_conditions_unique{i,5} = 'significant p-adj (Wilcoxon Rank)';
-        else
-            compare_conditions_unique{i,5} = [];
-        end
-    end
-
-    % Assign frequency label
-    for i = 1:length(compare_conditions_unique)
-        compare_conditions_unique{i,6} = all_freq{freq};
-    end
+    % Store results in a channel x channel matrix
+    results_wilrank_adj_p = zeros(33); % create a channel x channel matrix of zeros 
+    results_wilrank_adj_p(tri_idx) = adj_p; % assign WR adj p values to upper triangle, excluding diagonal
+    results_wilrank_adj_p = results_wilrank_adj_p + results_wilrank_adj_p'; % make the matrix symmetrical along the diagonal
+    %     % Check if the matrix is symmetric
+    %     isequal(results_wilrank_adj_p, results_wilrank_adj_p');
 
     % Consolidate results
-    % 'NS_ROI_0_1000ms is a cell with results for each frequency band in each cell (see above)
-    % Within each cell:
-        % col1 = all results
-        % col2 = channel pair
-        % col3 = uncorrected p-value (Wilcoxon Rank)
-        % col4 = corrected p-value (FDR)
-        % col5 = 'significant' or not '[]'
-    NS_ROI_500_1000ms{freq} = compare_conditions_unique;
-%     clear compare_conditions_unique compare_conditions differences normal_condition scramble_condition adj_p raw_pValues p p2
-    
-    % Create connectivity matrices, based on WR uncorrected p-values 
-    for i = 1:size(compare_conditions,1)
-        for j = 1:size(compare_conditions,2)
-            connectivity_matrix_WR_p{freq}(i,j) = compare_conditions{i,j}.WilcoxonRankPvalue;
-        end       
-    end
-
-    % Create connectivity matrices, based on WR FDR-corrected p-values 
-    matrix_adj_p = zeros(length(all_channels)); % create a channel x channel matrix of zeros 
-    matrix_adj_p(triu(true(length(all_channels)), 1)) = adj_p; % assign adjusted P-values to upper triangle
-    matrix_adj_p(tril(true(length(all_channels)), -1)) = adj_p; % assign adjusted P-values to lower triangle 
-
-    connectivity_matrix_WR_adj_p{freq} = matrix_adj_p;
+    NS_500_1000ms{freq}.frequency = all_freq{freq};
+    NS_500_1000ms{freq}.results_normality = results_normality;
+    NS_500_1000ms{freq}.results_ttest = results_ttest;
+    NS_500_1000ms{freq}.results_wilrank = results_wilrank;
+    NS_500_1000ms{freq}.results_wilrank_adj_p = results_wilrank_adj_p;
 
 end
 
-% Save all results 
-save('output/NS_ROI_500_1000ms.mat','NS_ROI_500_1000ms')
+% Save results as .mat 
+save('output/NS_500_1000ms.mat','NS_500_1000ms')
 
 % Save connectivity matrices as tables for visualizations in R
 for i = 1:length(all_freq)
-    T = array2table(connectivity_matrix_WR_p{i}); 
-    writetable(T,strcat('output/','connectivity_matrix_WR_p_',all_freq{i},'.xlsx'),"WriteVariableNames",0);
     
-    T2 = array2table(connectivity_matrix_WR_adj_p{i}); 
-    writetable(T2,strcat('output/','connectivity_matrix_WR_adj_p_',all_freq{i},'.xlsx'),"WriteVariableNames",0);
-end 
+    % 1. Create a table of Channel x Channel Wilcoxon Rank p-values (raw) 
+    T = array2table(NS_500_1000ms{i}.results_wilrank);
+    full_file_path = strcat('output/','connectivity_matrix_WR_p_',all_freq{i},'.xlsx');
+    % if the file name already exists, delete it
+    if exist(full_file_path, 'file')
+        delete(full_file_path);
+    end
+    writetable(T,full_file_path,"WriteVariableNames",0);
+
+    % 2. Create a table of Channel x Channel Wilcoxon Rank adjusted p-values (FDR) 
+    T2 = array2table(NS_500_1000ms{i}.results_wilrank_adj_p);
+    full_file_path = strcat('output/','connectivity_matrix_WR_adj_p_',all_freq{i},'.xlsx');
+    % if the file name already exists, delete it
+    if exist(full_file_path, 'file')
+        delete(full_file_path);
+    end
+    writetable(T2,full_file_path,"WriteVariableNames",0);
+
+end
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1104,3 +1114,23 @@ end
 % 
 % % Display the modified matrix
 % disp(matrix)
+
+
+
+% 
+% % confirm data restructuring was done correctly
+% n = 1;
+% for channel1 = 1:33
+%     for channel2 = 1:33
+%         for subject = 1:29
+%             x = PLI_pooled_normal{freq}(channel1,channel2,subject);
+%             y = normal_condition{channel1,channel2}(subject);
+%             list(n) = ~isequal(x,y);
+%             n = n+1;
+%         end
+%     end
+% end
+% nnz(list)
+% 
+
+
