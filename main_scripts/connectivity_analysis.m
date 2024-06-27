@@ -997,10 +997,13 @@ for freq = 1:length(all_freq)
 
 
             % For each channel pair, calculate paired differences  
+            % We are interested in paired differences because this
+            % experiment has a repeated measures design (each subject undergoes all conditions)
+            % Thus, we check normality and perform statistical tests on the paired differences 
             differences = normal_condition{i,j} - scramble_condition{i,j};
 
 
-            % Perform Shapiro-Wilk test on paired differences to check assumption of normality 
+            % Check normality assumption: Perform Shapiro-Wilk test on paired differences 
             [H, pValue, W] = swtest(differences);
             % Store results in a channel x channel matrix 
             if H == 0
@@ -1018,7 +1021,7 @@ for freq = 1:length(all_freq)
             results_ttest(i,j) = p; 
 
 
-            % Perform non-parametric Wilcoxon-rank test
+            % Perform non-parametric Wilcoxon-rank test on the paired differences
             % *but only intepret if the assumption of normality is violated*
             [p2, h, stats] = signrank(differences);
             % Store results in a channel x channel matrix 
@@ -1036,12 +1039,12 @@ for freq = 1:length(all_freq)
     raw_pValues = pairs_unique; 
     q = 0.05;
     [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(raw_pValues,q,'pdep','yes');
-    adj_p = round(adj_p,3);
+    adj_p = round(adj_p,4);
 
     % Store results in a channel x channel matrix
     results_wilrank_adj_p = zeros(33); % create a channel x channel matrix of zeros 
     results_wilrank_adj_p(tri_idx) = adj_p; % assign WR adj p values to upper triangle, excluding diagonal
-    results_wilrank_adj_p = results_wilrank_adj_p + results_wilrank_adj_p'; % make the matrix symmetrical along the diagonal
+    results_wilrank_adj_p = results_wilrank_adj_p + results_wilrank_adj_p'; % make the matrix symmetrical wrt the diagonal
     %     % Check if the matrix is symmetric
     %     isequal(results_wilrank_adj_p, results_wilrank_adj_p');
 

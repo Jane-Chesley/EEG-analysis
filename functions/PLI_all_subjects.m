@@ -11,6 +11,10 @@ timepts = input{1}.time{1}; % all time points, which are constant across measure
 timepts = round(timepts,2); % round time points
 T1_idx = find(timepts >= min_T1 & timepts <= max_T1); % find indices of toi range
 
+% create a log file to document script progress, as these calculations can take several hours 
+logFileName = 'logfile.txt';
+logfile = fopen(logFileName, 'a'); % open or create a log file for writing (append mode)
+fprintf(logfile, 'Script started\n'); % log a message indicating the start of the script
 
 
 for freq = 1:7
@@ -111,8 +115,13 @@ for freq = 1:7
 
     % consolidate data for all frequencies
     PLI_allfreq{freq} = PLI_allsubjects;
+    
+    % update log file 
+    fprintf(logfile, 'frequency completed');
 
 
 end
 
+% close the log file
+fclose(logfile); 
 

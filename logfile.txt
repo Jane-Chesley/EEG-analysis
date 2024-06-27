@@ -1,15 +1,3 @@
 Script started
-PLI 1/14 completed
-PLI 2/14 completed
-PLI 3/14 completed
-PLI 4/14 completed
-PLI 5/14 completed
-PLI 6/14 completed
-PLI 7/14 completed
-PLI 8/14 completed
-PLI 9/14 completed
-PLI 10/14 completed
-PLI 11/14 completed
-PLI 12/14 completed
-PLI 13/14 completed
-Script started
+frequency completedfrequency completedfrequency completedfrequency completedfrequency completedfrequency completedfrequency completedScript started
+frequency completedfrequency completedfrequency completedfrequency completedfrequency completedfrequency completedfrequency completed
