@@ -973,8 +973,8 @@ save(strcat('output/PLI_pooled_scramble_',toi,'.mat'),'PLI_pooled_scramble')
 %% ATTN
 % load input data
 % input data are 4-D PLI data (freq x channel x channel x subject) for normal and scramble conditions, computed above 
-load(fullfile('output',strcat('PLI_pooled_normal_',toi,'.mat')));
-load(fullfile('output',strcat('PLI_pooled_scramble_',toi,'.mat')));
+load(fullfile('output',strcat('PLI_pooled_normal_',toi,'.mat'));
+load(fullfile('output',strcat('PLI_pooled_scramble_',toi,'.mat'));
 
 %% Continue
 % pre-allocate variables for speed

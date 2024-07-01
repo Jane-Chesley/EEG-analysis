@@ -152,8 +152,6 @@ channels <- nrow(channel_locations)
 all_files <- list.files(path <-file.path(dir_parent, 'input'))
 # Filter file names: keep only files that have "WR_p_" in their name
 filtered_files <- all_files[grep("WR_p_", all_files, fixed = TRUE)]
-# Remove strings containing "~$"
-filtered_files <- filtered_files[grepl("connectivity_matrix", filtered_files)]
 
 
 for (f in 1:length(filtered_files)) {
@@ -172,7 +170,7 @@ for (f in 1:length(filtered_files)) {
   # Extract frequency of interest (FOI) from current file path 
   FOI <- str_extract(file_name, "(?<=p_).*") # Extract the text that comes after the last underscore (the frequency of interest, FOI)
   FOI <- toTitleCase(FOI) # Capitalize the first letter
-  current_plot <- paste("PLI Normal vs Scramble | 500-1000ms | ",FOI)
+  current_plot <- paste("PLI Normal vs Scramble | 0-1000ms | ",FOI)
   
   print(file_name)
   
