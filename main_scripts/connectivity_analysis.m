@@ -942,7 +942,9 @@ end
 %% Part 4.3.1 Compute PLIs on new time window 
 
 % define time-window of interest (TOI) in seconds
-min_T1 = 0.5; % TOI minimum 
+% min_T1 = 0.5; % TOI minimum 
+% max_T1 = 1; % TOI maximum 
+min_T1 = 0; % TOI minimum 
 max_T1 = 1; % TOI maximum 
 
 % load input data
@@ -952,18 +954,23 @@ load(fullfile('output','all_channels.mat'))
 all_freq = {'delta';'theta';'alpha';'beta';'gamma_A_35_45';'gamma_B_25_45_BS30';'broadband_1_45'};
 
 PLI_pooled_normal = PLI_all_subjects(data_clean_pooled_normal, min_T1, max_T1);
-save('output/PLI_pooled_normal_500_1000ms.mat','PLI_pooled_normal')
+% save('output/PLI_pooled_normal_500_1000ms.mat','PLI_pooled_normal')
+save('output/PLI_pooled_normal_0_1000ms.mat','PLI_pooled_normal')
 
 PLI_pooled_scramble = PLI_all_subjects(data_clean_pooled_scramble, min_T1, max_T1);
-save('output/PLI_pooled_scramble_500_1000ms.mat','PLI_pooled_scramble')
+% save('output/PLI_pooled_scramble_500_1000ms.mat','PLI_pooled_scramble')
+save('output/PLI_pooled_scramble_0_1000ms.mat','PLI_pooled_scramble')
+
 
 
 %% Statistically compare Normal vs Scramble conditions 
 
 % load input data
 % input data are 4-D PLI data (freq x channel x channel x subject) for normal and scramble conditions, computed above 
-load(fullfile('output','PLI_pooled_normal_500_1000ms.mat'));
-load(fullfile('output','PLI_pooled_scramble_500_1000ms.mat'));
+% load(fullfile('output','PLI_pooled_normal_500_1000ms.mat'));
+% load(fullfile('output','PLI_pooled_scramble_500_1000ms.mat'));
+load(fullfile('output','PLI_pooled_normal_0_1000ms.mat'));
+load(fullfile('output','PLI_pooled_scramble_0_1000ms.mat'));
 
 % pre-allocate variables for speed
 NS_500_1000ms = cell(1,length(all_freq));
@@ -1057,15 +1064,19 @@ for freq = 1:length(all_freq)
 
 end
 
+% % Save results as .mat 
+% save('output/NS_500_1000ms.mat','NS_500_1000ms')
 % Save results as .mat 
-save('output/NS_500_1000ms.mat','NS_500_1000ms')
+save('output/NS_0_1000ms.mat','NS_500_1000ms')
 
 % Save connectivity matrices as tables for visualizations in R
 for i = 1:length(all_freq)
-    
-    % 1. Create a table of Channel x Channel Wilcoxon Rank p-values (raw) 
-    T = array2table(NS_500_1000ms{i}.results_wilrank);
-    full_file_path = strcat('output/','connectivity_matrix_WR_p_',all_freq{i},'.xlsx');
+
+    % 1. Create a table of Channel x Channel Wilcoxon Rank p-values (raw)
+%     T = array2table(NS_500_1000ms{i}.results_wilrank);
+    T = array2table(NS_0_1000ms{i}.results_wilrank);
+
+    full_file_path = strcat('output/','conn_matrix_1000ms_WR_p_',all_freq{i},'.xlsx');
     % if the file name already exists, delete it
     if exist(full_file_path, 'file')
         delete(full_file_path);
@@ -1073,8 +1084,9 @@ for i = 1:length(all_freq)
     writetable(T,full_file_path,"WriteVariableNames",0);
 
     % 2. Create a table of Channel x Channel Wilcoxon Rank adjusted p-values (FDR) 
-    T2 = array2table(NS_500_1000ms{i}.results_wilrank_adj_p);
-    full_file_path = strcat('output/','connectivity_matrix_WR_adj_p_',all_freq{i},'.xlsx');
+%     T2 = array2table(NS_500_1000ms{i}.results_wilrank_adj_p);
+    T2 = array2table(NS_0_1000ms{i}.results_wilrank_adj_p);
+    full_file_path = strcat('output/','conn_matrix_1000_ms_WR_adj_p_',all_freq{i},'.xlsx');
     % if the file name already exists, delete it
     if exist(full_file_path, 'file')
         delete(full_file_path);
